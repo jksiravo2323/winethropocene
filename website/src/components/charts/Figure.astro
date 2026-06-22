@@ -1,0 +1,17 @@
+---
+const { n, title } = Astro.props;
+---
+
+<figure class="chart-figure">
+  {title && <figcaption><span class="fig-n">Figure {n}</span> {title}</figcaption>}
+  <div class="figure-content">
+    <slot />
+  </div>
+</figure>
+
+<style>
+.chart-figure { margin: 2rem 0; }
+figcaption { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.75rem; }
+.fig-n { font-weight: 600; color: var(--accent); }
+.figure-content { background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; padding: 1.5rem; }
+</style>

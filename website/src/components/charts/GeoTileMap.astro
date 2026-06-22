@@ -1,0 +1,20 @@
+---
+// GeoTileMap.astro — tile-based geographic heatmap
+const { tiles, colorScale } = Astro.props;
+---
+
+<div class="geo-tile-map">
+  {tiles.map(row => (
+    <div class="tile-row">
+      {row.map(tile => (
+        <div class="tile" style={`background:${colorScale ? colorScale(tile.value) : `rgba(var(--accent-rgb),${tile.value})`}`} title={tile.label}></div>
+      ))}
+    </div>
+  ))}
+</div>
+
+<style>
+.geo-tile-map { display: flex; flex-direction: column; gap: 2px; }
+.tile-row { display: flex; gap: 2px; }
+.tile { width: 20px; height: 20px; border-radius: 1px; }
+</style>

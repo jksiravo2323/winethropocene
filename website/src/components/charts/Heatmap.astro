@@ -1,0 +1,26 @@
+---
+// Heatmap.astro — grid-based heatmap chart
+const { data, xLabels, yLabels, colorScale } = Astro.props;
+---
+
+<div class="heatmap">
+  <div class="heatmap-grid" style={`grid-template-columns: auto repeat(${xLabels.length}, 1fr)`}>
+    <div></div>
+    {xLabels.map(l => <div class="heatmap-label">{l}</div>)}
+    {data.map((row, i) => (
+      <>
+        <div class="heatmap-label">{yLabels[i]}</div>
+        {row.map((val, j) => (
+          <div class="heatmap-cell" style={`background:${colorScale ? colorScale(val) : `rgba(var(--accent-rgb),${val})`}`}></div>
+        ))}
+      </>
+    ))}
+  </div>
+</div>
+
+<style>
+.heatmap { overflow-x: auto; }
+.heatmap-grid { display: grid; gap: 2px; }
+.heatmap-label { font-size: 0.7rem; color: var(--text-dim); padding: 0.25rem; }
+.heatmap-cell { aspect-ratio: 1; min-width: 30px; border-radius: 2px; }
+</style>

@@ -1,0 +1,26 @@
+---
+// LineChart.astro — SVG line chart
+const { data, xKey, yKey, color, width, height } = Astro.props;
+const w = width || 600;
+const h = height || 300;
+const pad = 40;
+const xs = data.map((_, i) => pad + (i / (data.length - 1)) * (w - 2 * pad));
+const maxY = Math.max(...data.map(d => d[yKey]));
+const minY = Math.min(...data.map(d => d[yKey]));
+const range = maxY - minY || 1;
+const ys = data.map(d => pad + (1 - (d[yKey] - minY) / range) * (h - 2 * pad));
+const pathD = xs.map((x, i) => `${i === 0 ? "M" : "L"}${x},${ys[i]}`).join(" ");
+---
+
+<svg viewBox={`0 0 ${w} ${h}`} class="line-chart">
+  <path d={pathD} fill="none" stroke={color || "var(--accent)"} stroke-width="2" />
+  {data.map((d, i) => (
+    <circle cx={xs[i]} cy={ys[i]} r="3" fill={color || "var(--accent)"}>
+      <title>{d[xKey]}: {d[yKey]}</title>
+    </circle>
+  ))}
+</svg>
+
+<style>
+.line-chart { width: 100%; height: auto; }
+</style>

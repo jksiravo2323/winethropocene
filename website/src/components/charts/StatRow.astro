@@ -1,0 +1,19 @@
+---
+const { stats } = Astro.props;
+---
+
+<div class="stat-row">
+  {stats.map(s => (
+    <div class="stat">
+      <span class="stat-value">{s.display}</span>
+      <span class="stat-label">{s.label}</span>
+    </div>
+  ))}
+</div>
+
+<style>
+.stat-row { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+.stat { flex: 1; min-width: 200px; }
+.stat-value { display: block; font-family: Georgia, serif; font-size: 2rem; color: var(--accent); }
+.stat-label { display: block; font-size: 0.8rem; color: var(--text-dim); margin-top: 0.25rem; }
+</style>

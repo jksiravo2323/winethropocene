@@ -1,0 +1,80 @@
+---
+import PointCloudBackdrop from "../components/PointCloudBackdrop.astro";
+
+const { title, description } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title ? `${title} — Winethropocene` : "Winethropocene — Wine, Climate & Adaptation"}</title>
+    <meta name="description" content={description || "An online magazine about wine, climate change, and adaptation."} />
+    <link rel="icon" href="/assets/favicon.svg" />
+    <meta property="og:title" content={title || "Winethropocene"} />
+    <meta property="og:description" content={description || "Wine, Climate & Adaptation"} />
+    <meta property="og:image" content="/assets/og-image.svg" />
+    <meta name="twitter:card" content="summary_large_image" />
+  </head>
+  <body>
+    <PointCloudBackdrop />
+    <nav class="main-nav">
+      <div class="nav-inner">
+        <a href="/" class="nav-brand">Winethropocene</a>
+        <div class="nav-links">
+          <a href="/articles/">Articles</a>
+          <a href="/atlas/">Atlas</a>
+          <a href="/producers/">Producers</a>
+          <a href="/about/">About</a>
+        </div>
+      </div>
+    </nav>
+    <main>
+      <slot />
+    </main>
+    <footer class="main-footer">
+      <div class="footer-inner">
+        <p>Winethropocene — Wine, Climate & Adaptation</p>
+        <div class="footer-links">
+          <a href="/contact/">Contact</a>
+          <a href="/media/">Media</a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
+
+<style is:global>
+:root {
+  --accent: #8B2252;
+  --accent-rgb: 139,34,82;
+  --bg: #0D0D0D;
+  --bg-card: #141414;
+  --text: #F5F0EB;
+  --text-dim: rgba(245,240,235,0.55);
+  --border: rgba(245,240,235,0.08);
+}
+*,*::before,*::after { box-sizing: border-box; margin: 0; }
+html { background: var(--bg); color: var(--text); font-family: "IBM Plex Sans", system-ui, sans-serif; scroll-behavior: smooth; }
+body { min-height: 100vh; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.main-nav { position: sticky; top: 0; z-index: 100; background: rgba(13,13,13,0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+.nav-inner { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 2rem; }
+.nav-brand { font-family: Georgia, serif; font-size: 1.1rem; color: var(--accent); letter-spacing: 0.05em; }
+.nav-links { display: flex; gap: 1.5rem; }
+.nav-links a { color: var(--text-dim); font-size: 0.85rem; }
+.nav-links a:hover { color: var(--text); text-decoration: none; }
+.main-footer { border-top: 1px solid var(--border); margin-top: 4rem; padding: 2rem; }
+.footer-inner { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+.footer-inner p { font-size: 0.8rem; color: var(--text-dim); }
+.footer-links { display: flex; gap: 1rem; }
+.footer-links a { font-size: 0.8rem; color: var(--text-dim); }
+
+@media (max-width: 768px) {
+  .nav-inner { flex-direction: column; gap: 0.5rem; padding: 0.75rem 1rem; }
+  .nav-links { gap: 1rem; }
+  .footer-inner { flex-direction: column; gap: 0.5rem; text-align: center; }
+}
+</style>
