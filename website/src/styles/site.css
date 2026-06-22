@@ -1,0 +1,126 @@
+/* Winethropocene Site Styles — Wine-Terroir Theme */
+
+:root {
+  --accent: #8B2252;
+  --accent-rgb: 139, 34, 82;
+  --accent-secondary: #C4743E;
+  --bg: #0D0D0D;
+  --bg-card: #141414;
+  --bg-card-hover: #1A1A1A;
+  --text: #F5F0EB;
+  --text-dim: rgba(245, 240, 235, 0.55);
+  --text-faint: rgba(245, 240, 235, 0.28);
+  --border: rgba(245, 240, 235, 0.08);
+  --border-hover: rgba(245, 240, 235, 0.15);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main { flex: 1; }
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+a:hover { color: var(--accent-secondary); }
+
+h1, h2, h3, h4 { font-weight: 300; line-height: 1.25; }
+
+img { max-width: 100%; height: auto; }
+
+/* Article Body Styles */
+.article-body {
+  max-width: 720px;
+  margin: 0 auto;
+  line-height: 1.75;
+  font-size: 1.05rem;
+}
+
+.article-body h2 {
+  font-family: Georgia, serif;
+  font-size: 1.5rem;
+  margin: 2.5rem 0 0.75rem;
+  color: var(--text);
+}
+
+.article-body h3 {
+  font-size: 1.15rem;
+  margin: 1.75rem 0 0.5rem;
+  color: var(--text);
+}
+
+.article-body p {
+  margin: 0 0 1.25rem;
+}
+
+.article-body ul, .article-body ol {
+  margin: 0 0 1.25rem;
+  padding-left: 1.5rem;
+}
+
+.article-body li { margin-bottom: 0.5rem; }
+
+.article-body blockquote {
+  border-left: 3px solid var(--accent);
+  margin: 1.5rem 0;
+  padding: 0.5rem 1.5rem;
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+.article-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  font-size: 0.9rem;
+}
+
+.article-body th, .article-body td {
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.article-body th {
+  font-weight: 500;
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.article-body code {
+  background: var(--bg-card);
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+.article-body pre {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1rem;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+}
+
+.article-body strong { font-weight: 500; color: var(--text); }
