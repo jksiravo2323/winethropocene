@@ -1,41 +1,73 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import SectionHero from "../components/SectionHero.astro";
 import { getCollection } from "astro:content";
+import { categoryMeta, statusLabel } from "../lib/atlas";
+import type { AtlasEntry } from "../lib/atlas";
 
-const atlasEntries = await getCollection("atlas");
+const all = await getCollection("atlas");
+const bySlug = new Map<string, AtlasEntry>();
+for (const e of all) bySlug.set(e.slug, e);
+
+const categories = [...new Set(all.map((e) => e.data.category))].sort();
+const statuses = [...new Set(all.map((e) => e.data.status).filter(Boolean))].sort();
 ---
 
-<BaseLayout title="Atlas">
-  <SectionHero title="Atlas" subtitle="A living map of wine regions, varieties, and climate phenomena." accent="#5B9BD5" />
-  <div class="atlas-grid">
-    {atlasEntries.map(entry => (
-      <a href={`/atlas/${entry.slug}/`} class="atlas-card">
-        <div class="atlas-card-text">
-          <div class="atlas-tags">
-            <span class="tag cat">{entry.data.category}</span>
-            {entry.data.status && <span class={`tag status status-${entry.data.status}`}>{entry.data.status}</span>}
+<BaseLayout title="Atlas" description="A living map of wine regions, varieties, and climate phenomena.">
+  <section class="container" style="padding-top: clamp(2.5rem, 5vw, 4rem); padding-bottom: clamp(2rem, 4vw, 3rem);">
+    <header class="page-hero">
+      <h1 class="page-hero__title">Atlas</h1>
+      <p class="page-hero__subtitle">A living map of wine regions, grape varieties, and climate phenomena — where they are, how they're changing, and what's at stake.</p>
+    </header>
+
+    <div class="atlas-filters" role="group" aria-label="Filter atlas entries">
+      <div class="atlas-filters__group">
+        <span class="atlas-filters__label">Category</span>
+        {categories.map((cat) => (
+          <a href={`?category=${cat}`} class={`atlas-filter-chip${Astro.url.searchParams.get("category") === cat ? " atlas-filter-chip--active" : ""}`} style={Astro.url.searchParams.get("category") === cat ? `background:${categoryMeta(cat).color};border-color:${categoryMeta(cat).color};color:#fff` : `--chip-color:${categoryMeta(cat).color}`}>
+            {categoryMeta(cat).label}
+          </a>
+        ))}
+        {Astro.url.searchParams.has("category") && <a href="?" class="atlas-filter-chip atlas-filter-chip--clear">Clear</a>}
+      </div>
+    </div>
+
+    <div class="atlas-grid">
+      {all.map((entry) => (
+        <a href={`/atlas/${entry.slug}`} class="atlas-card">
+          <div class="atlas-card__header">
+            <span class="atlas-card__cat" style={`color:${categoryMeta(entry.data.category).color}`}>{categoryMeta(entry.data.category).label}</span>
+            {entry.data.status && (
+              <span class="atlas-card__status">{statusLabel(entry.data.status)}</span>
+            )}
           </div>
-          <h2>{entry.data.title}</h2>
-          <p class="place">{entry.data.place}, {entry.data.country}</p>
-          {entry.data.summary && <p class="summary">{entry.data.summary}</p>}
-        </div>
-      </a>
-    ))}
-  </div>
+          <h2 class="atlas-card__title">{entry.data.title}</h2>
+          <p class="atlas-card__place">{entry.data.place}, {entry.data.country}</p>
+          {entry.data.summary && <p class="atlas-card__summary">{entry.data.summary}</p>}
+        </a>
+      ))}
+    </div>
+  </section>
 </BaseLayout>
 
 <style>
-.atlas-grid { max-width: 1200px; margin: 0 auto; padding: 2rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.5rem; }
-.atlas-card { display: block; border: 1px solid var(--border); border-radius: 4px; padding: 1.25rem; transition: border-color 0.2s; }
-.atlas-card:hover { border-color: var(--accent); text-decoration: none; }
-.atlas-tags { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; }
-.tag { padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; border: 1px solid var(--border); }
-.cat { border-color: var(--accent); color: var(--accent); }
-.status-thriving { border-color: #4ade80; color: #4ade80; }
-.status-adapting { border-color: #facc15; color: #facc15; }
-.status-at-risk { border-color: #f87171; color: #f87171; }
-.atlas-card h2 { font-family: Georgia, serif; font-size: 1.15rem; font-weight: 300; margin: 0 0 0.25rem; color: var(--text); }
-.place { font-size: 0.75rem; color: var(--text-dim); margin: 0 0 0.5rem; }
-.summary { font-size: 0.8rem; color: var(--text-dim); line-height: 1.5; margin: 0; }
+.page-hero { max-width: 720px; margin-bottom: 2.5rem; }
+.page-hero__title { font-family: Georgia, serif; font-size: 2.5rem; font-weight: 300; margin: 0 0 0.5rem; }
+.page-hero__subtitle { color: var(--text-dim); font-size: 1.05rem; line-height: 1.6; margin: 0; }
+
+.atlas-filters { margin-bottom: 2rem; }
+.atlas-filters__group { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+.atlas-filters__label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); margin-right: 0.5rem; }
+.atlas-filter-chip { padding: 0.3rem 0.8rem; border-radius: 999px; font-size: 0.75rem; border: 1px solid var(--border); color: var(--text-dim); }
+.atlas-filter-chip:hover { border-color: var(--chip-color, var(--accent)); color: var(--text); text-decoration: none; }
+.atlas-filter-chip--clear { font-size: 0.7rem; color: var(--text-faint); }
+
+.atlas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.25rem; }
+.atlas-card { display: block; border: 1px solid var(--border); border-radius: 5px; padding: 1.25rem; transition: border-color 0.2s, background 0.2s; }
+.atlas-card:hover { border-color: var(--border-hover); background: var(--bg-card); text-decoration: none; }
+.atlas-card__header { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
+.atlas-card__cat { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 500; }
+.atlas-card__status { font-size: 0.62rem; color: var(--text-dim); padding: 0.1rem 0.5rem; border: 1px solid var(--border); border-radius: 999px; }
+.atlas-card__title { font-family: Georgia, serif; font-size: 1.15rem; font-weight: 300; margin: 0 0 0.2rem; color: var(--text); }
+.atlas-card__place { font-size: 0.75rem; color: var(--text-dim); margin: 0 0 0.5rem; }
+.atlas-card__summary { font-size: 0.82rem; color: var(--text-dim); line-height: 1.55; margin: 0; }
 </style>

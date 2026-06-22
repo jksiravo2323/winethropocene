@@ -1,33 +1,58 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import SectionHero from "../components/SectionHero.astro";
 import { getCollection } from "astro:content";
 
 const team = await getCollection("team");
 team.sort((a, b) => a.data.order - b.data.order);
 ---
 
-<BaseLayout title="About">
-  <SectionHero title="About Winethropocene" subtitle="An online magazine about wine, climate change, and adaptation." accent="#8B2252" />
-  <div class="about-content">
-    <p>Winethropocene reports from the front lines of wine and climate — covering the regions, varieties, producers, and phenomena that are shaping the future of what we drink.</p>
-    <h2>Team</h2>
-    <div class="team-grid">
-      {team.map(member => (
-        <div class="team-card">
-          <h3>{member.data.name}</h3>
-          <p>{member.data.role}</p>
+<BaseLayout title="About" description="Winethropocene — an online magazine about wine, climate change, and adaptation.">
+  <section class="container" style="padding-top: clamp(2.5rem, 5vw, 4rem); padding-bottom: clamp(2rem, 4vw, 3rem);">
+    <header class="page-hero">
+      <h1 class="page-hero__title">About Winethropocene</h1>
+      <p class="page-hero__subtitle">An online magazine about wine, climate change, and adaptation.</p>
+    </header>
+
+    <div class="about-content">
+      <div class="about-prose">
+        <p>Climate change is redrawing the map of wine. From the frost-burned buds of Burgundy to the drought-stressed vines of Mendoza, from the saltwater seeping into Venice's lagoon vineyards to the first commercial Pinot Noir harvests in Denmark — the wine world is in motion.</p>
+        <p>Winethropocene reports from the front lines. We cover the regions, varieties, producers, and phenomena that are shaping the future of what we drink. Our articles are grounded in peer-reviewed research, anchored to primary sources, and written for anyone who cares about wine and the planet it comes from.</p>
+        <p>The name is a portmanteau of <em>wine</em> and <em>Anthropocene</em> — the proposed geological epoch defined by human influence on the Earth's climate and ecosystems. We are living through it, one vintage at a time.</p>
+      </div>
+
+      {team.length > 0 && (
+        <div class="about-team">
+          <h2 class="about-team__head">Team</h2>
+          <div class="team-grid">
+            {team.map((member) => (
+              <div class="team-card">
+                {member.data.photo && <img src={member.data.photo} alt={member.data.name} class="team-card__photo" />}
+                <div class="team-card__text">
+                  <h3 class="team-card__name">{member.data.name}</h3>
+                  <p class="team-card__role">{member.data.role}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-      ))}
+      )}
     </div>
-  </div>
+  </section>
 </BaseLayout>
 
 <style>
-.about-content { max-width: 720px; margin: 0 auto; padding: 2rem; line-height: 1.7; }
-.about-content h2 { font-family: Georgia, serif; font-size: 1.5rem; margin: 2rem 0 1rem; }
-.team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.5rem; margin-top: 1rem; }
-.team-card { border: 1px solid var(--border); border-radius: 4px; padding: 1.25rem; }
-.team-card h3 { font-family: Georgia, serif; font-size: 1.1rem; margin: 0 0 0.25rem; }
-.team-card p { font-size: 0.85rem; color: var(--text-dim); margin: 0; }
+.page-hero { max-width: 720px; margin-bottom: 2.5rem; }
+.page-hero__title { font-family: Georgia, serif; font-size: 2.5rem; font-weight: 300; margin: 0 0 0.5rem; }
+.page-hero__subtitle { color: var(--text-dim); font-size: 1.05rem; line-height: 1.6; margin: 0; }
+
+.about-content { max-width: 720px; }
+.about-prose { line-height: 1.75; font-size: 1.05rem; margin-bottom: 3rem; }
+.about-prose p { margin-bottom: 1.25rem; }
+
+.about-team__head { font-family: Georgia, serif; font-size: 1.3rem; font-weight: 300; margin-bottom: 1rem; }
+.team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }
+.team-card { display: flex; gap: 0.75rem; align-items: center; padding: 0.75rem; border: 1px solid var(--border); border-radius: 5px; }
+.team-card__photo { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
+.team-card__name { font-family: Georgia, serif; font-size: 1rem; margin: 0; }
+.team-card__role { font-size: 0.78rem; color: var(--text-dim); margin: 0.1rem 0 0; }
 </style>

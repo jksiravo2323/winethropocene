@@ -1,10 +1,92 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import SectionHero from "../components/SectionHero.astro";
-import Splash from "../components/Splash.astro";
+import { getCollection } from "astro:content";
+
+const latestArticles = await getCollection("articles", ({ data }) => !data.draft);
+latestArticles.sort((a, b) => b.data.date.getTime() - a.data.date.getTime());
+const featured = latestArticles.slice(0, 3);
+
+const atlasEntries = await getCollection("atlas");
+const atRisk = atlasEntries.filter((e) => e.data.status === "at-risk").slice(0, 4);
 ---
 
 <BaseLayout>
-  <Splash title="Wine, Climate & Adaptation" />
-  <SectionHero title="The Story" subtitle="Climate change is redrawing the map of wine — from the vineyards of Bordeaux to the high-altitude deserts of Mendoza. Winethropocene reports from the front lines." accent="#8B2252" />
+  <section class="splash">
+    <div class="splash__inner container">
+      <h1 class="splash__wordmark">
+        <span class="splash__wine">WINE</span>
+        <span class="splash__thro">THROPOCENE</span>
+      </h1>
+      <p class="splash__tagline">An online magazine about wine, climate change, and adaptation.</p>
+    </div>
+  </section>
+
+  <section class="container" style="padding-top: 3rem; padding-bottom: 2rem;">
+    <div class="section-head">
+      <h2 class="section-head__title">Latest Articles</h2>
+      <a href="/articles" class="section-head__link">All articles &rarr;</a>
+    </div>
+    <div class="home-grid">
+      {featured.map((article) => (
+        <a href={`/articles/${article.slug}`} class="home-card">
+          {article.data.heroImage && (
+            <div class="home-card__img-wrap">
+              <img src={article.data.heroImage} alt={article.data.title} class="home-card__img" loading="lazy" />
+            </div>
+          )}
+          <div class="home-card__body">
+            <span class="home-card__typology">{article.data.typology?.replace("-", " ")}</span>
+            <h3 class="home-card__title">{article.data.title}</h3>
+            <p class="home-card__summary">{article.data.summary}</p>
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <section class="container" style="padding-bottom: 3rem;">
+    <div class="section-head">
+      <h2 class="section-head__title">Atlas: At-Risk Regions</h2>
+      <a href="/atlas" class="section-head__link">Full atlas &rarr;</a>
+    </div>
+    <div class="home-grid home-grid--atlas">
+      {atRisk.map((entry) => (
+        <a href={`/atlas/${entry.slug}`} class="home-card home-card--atlas">
+          <div class="home-card__body">
+            <span class="home-card__cat">{entry.data.category}</span>
+            <h3 class="home-card__title">{entry.data.title}</h3>
+            <p class="home-card__place">{entry.data.place}, {entry.data.country}</p>
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
 </BaseLayout>
+
+<style>
+.splash { display: flex; align-items: center; justify-content: center; min-height: 55vh; text-align: center; padding: 3rem 1.5rem; }
+.splash__inner { max-width: 800px; }
+.splash__wordmark { display: flex; flex-direction: column; align-items: center; gap: 0; }
+.splash__wine { font-family: Georgia, serif; font-size: clamp(3rem, 8vw, 6rem); font-weight: 300; letter-spacing: 0.4em; color: var(--accent); line-height: 1; }
+.splash__thro { font-family: Georgia, serif; font-size: clamp(1.2rem, 3.5vw, 2.5rem); font-weight: 300; letter-spacing: 0.35em; margin-top: -0.2em; opacity: 0.9; }
+.splash__tagline { color: var(--text-dim); font-size: 1.05rem; margin-top: 1.5rem; }
+
+.section-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1.5rem; }
+.section-head__title { font-family: Georgia, serif; font-size: 1.5rem; font-weight: 300; }
+.section-head__link { font-size: 0.82rem; color: var(--text-dim); }
+.section-head__link:hover { color: var(--accent); text-decoration: none; }
+
+.home-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.25rem; }
+.home-grid--atlas { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.home-card { display: block; border: 1px solid var(--border); border-radius: 5px; overflow: hidden; transition: border-color 0.2s, background 0.2s; }
+.home-card:hover { border-color: var(--border-hover); background: var(--bg-card); text-decoration: none; }
+.home-card__img-wrap { aspect-ratio: 1200 / 630; overflow: hidden; border-bottom: 1px solid var(--border); }
+.home-card__img { width: 100%; height: 100%; object-fit: cover; }
+.home-card__body { padding: 1.25rem; }
+.home-card__typology { display: inline-block; font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); border: 1px solid var(--accent); padding: 0.1rem 0.5rem; border-radius: 999px; margin-bottom: 0.5rem; }
+.home-card__cat { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent-secondary); margin-bottom: 0.3rem; display: block; }
+.home-card__title { font-family: Georgia, serif; font-size: 1.15rem; font-weight: 300; margin: 0 0 0.3rem; color: var(--text); line-height: 1.3; }
+.home-card__summary { font-size: 0.82rem; color: var(--text-dim); line-height: 1.5; margin: 0; }
+.home-card__place { font-size: 0.75rem; color: var(--text-dim); margin: 0; }
+.home-card--atlas .home-card__body { padding: 1rem 1.25rem; }
+</style>
