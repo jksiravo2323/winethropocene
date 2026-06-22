@@ -2,7 +2,10 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "winethropocene",
   "compatibility_date": "2026-06-22",
-  "compatibility_flags": ["global_fetch_strictly_public", "nodejs_compat"],
+  "compatibility_flags": [
+    "global_fetch_strictly_public",
+    "nodejs_compat"
+  ],
   "main": "dist/_worker.js/index.js",
   "assets": {
     "binding": "ASSETS",
@@ -11,5 +14,6 @@
   "observability": {
     "enabled": true
   },
-  "workers_dev": true
+  "workers_dev": true,
+  "account_id": "99066fbf5fc8737bcbeca940dac1ac16"
 }
