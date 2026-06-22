@@ -3,7 +3,7 @@ import cloudflare from "@astrojs/cloudflare";
 import mdx from "@astrojs/mdx";
 
 export default defineConfig({
-  site: "https://winethropocene.com",
+  site: "https://winethropocene.xyz",
   output: "server",
   adapter: cloudflare({
     imageService: "compile",
