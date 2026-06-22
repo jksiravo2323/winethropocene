@@ -1,24 +1,281 @@
 ---
-const { data, xKey, yKey, color } = Astro.props;
+/**
+ * BarChart — bespoke SVG bar chart, on-brand (accent bars on black, thin
+ * baseline rule, IBM Plex labels). Bars grow from the zero line on scroll-enter;
+ * value labels fade in. All geometry is computed at build time; the client only
+ * reveals. Supports:
+ *   - vertical (default) or horizontal orientation
+ *   - a single series (`data`) or grouped multi-series (`categories` + `series`)
+ *   - negative values (bars grow either side of a zero line)
+ *
+ * Simple single series:
+ *   <BarChart unit="%" data={[
+ *     { label: "Olive oil", value: 60 },
+ *     { label: "All food", value: 30, highlight: true },
+ *   ]} />
+ *
+ * Grouped, horizontal (good for many long category labels):
+ *   <BarChart orientation="horizontal" unit=" bn"
+ *     categories={["France","Ireland","Germany"]}
+ *     series={[
+ *       { name: "Import", values: [7.1, 6.3, 6.1] },
+ *       { name: "Export", values: [3.4, 3.2, 1.3] },
+ *     ]} />
+ */
+export interface Bar {
+  label: string;
+  value: number;
+  /** Emphasise this bar (full-accent fill vs. muted). Single-series only. */
+  highlight?: boolean;
+}
+export interface BarSeries {
+  name: string;
+  values: number[];
+  /** Per-series colour (hex / css colour). Defaults to a brand palette slot. */
+  accent?: string;
+}
+export interface Props {
+  /** Single-series shorthand. */
+  data?: Bar[];
+  /** Grouped form: shared categories + one or more series. */
+  categories?: string[];
+  series?: BarSeries[];
+  orientation?: "vertical" | "horizontal";
+  unit?: string;
+  decimals?: number;
+  /** Force the value-axis maximum (defaults to data max + 12% headroom). */
+  max?: number;
+  /** Force the value-axis minimum (defaults to min(0, data min)). */
+  min?: number;
+  /** Show numeric labels on bars (default true; off is cleaner for dense charts). */
+  valueLabels?: boolean;
+  caption?: string;
+  accent?: string;
+}
+const {
+  data,
+  categories: catsIn,
+  series: seriesIn,
+  orientation = "vertical",
+  unit = "",
+  decimals = 0,
+  max,
+  min,
+  valueLabels = true,
+  caption,
+  accent,
+} = Astro.props;
+
+// Default brand palette for grouped series (primary accent, then muted tints).
+const PALETTE = [
+  "var(--accent)",
+  "rgba(255,255,255,0.55)",
+  "#ff7af0",
+  "rgba(255,255,255,0.3)",
+];
+
+// Normalise both input shapes to { categories, series }.
+const categories = data ? data.map((d) => d.label) : (catsIn ?? []);
+const series: Array<{ name: string; values: number[]; color: string }> = data
+  ? [{ name: "", values: data.map((d) => d.value), color: "var(--accent)" }]
+  : (seriesIn ?? []).map((s, i) => ({
+      name: s.name,
+      values: s.values,
+      color: s.accent ?? PALETTE[i % PALETTE.length],
+    }));
+const highlights = data ? data.map((d) => !!d.highlight) : null;
+const grouped = series.length > 1;
+const horizontal = orientation === "horizontal";
+
+const allValues = series.flatMap((s) => s.values);
+const dataMax = Math.max(0, ...allValues);
+const dataMin = Math.min(0, ...allValues);
+const axisMax = (max ?? dataMax * 1.12) || 1;
+const axisMin = min ?? dataMin * 1.12;
+const span = axisMax - axisMin || 1;
+
+const fmt = (v: number) =>
+  v.toLocaleString("en-GB", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }) + unit;
+
+const n = categories.length;
+const groupCount = series.length;
+
+// Geometry. Horizontal grows with row count; vertical is fixed.
+const W = 760;
+let H: number;
+let valToPx: (v: number) => number; // position along the value axis (px)
+let zeroPx: number;
+
+// pads
+const padValLabel = 26; // headroom for value labels on the value axis
+let padCat: number; // space for category labels on the category axis
+
+if (horizontal) {
+  padCat = Math.min(220, Math.max(90, ...categories.map((c) => c.length * 7.5)));
+  const padR = valueLabels ? 56 : 24;
+  const rowBand = grouped ? 26 + groupCount * 18 : 40;
+  const padT = 14;
+  const padB = 40; // value axis labels
+  H = padT + n * rowBand + padB;
+  const plotW = W - padCat - padR;
+  const x0 = padCat;
+  valToPx = (v: number) => x0 + ((v - axisMin) / span) * plotW;
+  zeroPx = valToPx(0);
+} else {
+  padCat = 52;
+  const padT = padValLabel + 8;
+  const plotH = 360 - padT - padCat;
+  H = 360;
+  const baseTop = padT;
+  valToPx = (v: number) => baseTop + ((axisMax - v) / span) * plotH;
+  zeroPx = valToPx(0);
+}
+
+// Build bar rects.
+type Cell = {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  color: string;
+  highlight: boolean;
+  neg: boolean;
+  lx: number;
+  ly: number;
+  anchor: string;
+  value: number;
+  idx: number;
+};
+const cells: Cell[] = [];
+const catLabels: Array<{ x: number; y: number; text: string; anchor: string }> = [];
+
+if (horizontal) {
+  const padT = 14;
+  const rowBand = grouped ? 26 + groupCount * 18 : 40;
+  const barThick = grouped ? 14 : 22;
+  const gap = 4;
+  categories.forEach((cat, ci) => {
+    const rowTop = padT + ci * rowBand;
+    const rowMid = rowTop + rowBand / 2;
+    const groupH = groupCount * barThick + (groupCount - 1) * gap;
+    const groupTop = rowMid - groupH / 2;
+    series.forEach((s, gi) => {
+      const v = s.values[ci] ?? 0;
+      const px = valToPx(v);
+      const y = groupTop + gi * (barThick + gap);
+      const neg = v < 0;
+      const x = neg ? px : zeroPx;
+      const w = Math.max(Math.abs(px - zeroPx), 0.5);
+      cells.push({
+        x, y, w, h: barThick, color: s.color,
+        highlight: highlights ? highlights[ci] : false,
+        neg, idx: ci,
+        lx: neg ? px - 6 : px + 6,
+        ly: y + barThick / 2 + 4,
+        anchor: neg ? "end" : "start",
+        value: v,
+      });
+    });
+    catLabels.push({ x: padCat - 10, y: rowMid + 4, text: cat, anchor: "end" });
+  });
+} else {
+  const padT = padValLabel + 8;
+  const slot = (W - 20) / n;
+  const barThick = grouped
+    ? Math.min((slot * 0.7) / groupCount, 60)
+    : Math.min(slot * 0.5, 88);
+  const gap = grouped ? 6 : 0;
+  categories.forEach((cat, ci) => {
+    const slotMid = 10 + slot * (ci + 0.5);
+    const groupW = groupCount * barThick + (groupCount - 1) * gap;
+    const groupLeft = slotMid - groupW / 2;
+    series.forEach((s, gi) => {
+      const v = s.values[ci] ?? 0;
+      const px = valToPx(v);
+      const x = groupLeft + gi * (barThick + gap);
+      const neg = v < 0;
+      const y = neg ? zeroPx : px;
+      const h = Math.max(Math.abs(px - zeroPx), 0.5);
+      cells.push({
+        x, y, w: barThick, h, color: s.color,
+        highlight: highlights ? highlights[ci] : false,
+        neg, idx: ci,
+        lx: x + barThick / 2,
+        ly: neg ? zeroPx + h + 16 : px - 8,
+        anchor: "middle",
+        value: v,
+      });
+    });
+    catLabels.push({ x: slotMid, y: H - padCat + 22, text: cat, anchor: "middle" });
+  });
+}
+
+// Gridlines along the value axis.
+const ticks = axisMin < 0 ? [axisMin, 0, axisMax] : [0, axisMax / 2, axisMax];
+const grid = ticks.map((v) => ({ v, px: valToPx(v), label: fmt(v) }));
 ---
 
-<div class="bar-chart">
-  {data.map(d => (
-    <div class="bar-row">
-      <span class="bar-label">{d[xKey]}</span>
-      <div class="bar-track">
-        <div class="bar-fill" style={`width:${d[yKey]}%;background:${color || "var(--accent)"}`}></div>
-      </div>
-      <span class="bar-value">{d[yKey]}%</span>
-    </div>
-  ))}
+<div
+  class={`chart chart--bar ${horizontal ? "chart--hbar" : "chart--vbar"}`}
+  data-chart
+  style={accent ? `--accent:${accent}` : undefined}
+>
+  <svg
+    viewBox={`0 0 ${W} ${H}`}
+    class="chart__svg"
+    role="img"
+    aria-label={caption ?? "Bar chart"}
+    preserveAspectRatio="xMidYMid meet"
+  >
+    {grid.map((g) =>
+      horizontal ? (
+        <>
+          <line class={g.v === 0 ? "chart__axis" : "chart__grid"} x1={g.px} x2={g.px} y1={6} y2={H - 34} />
+          <text class="chart__grid-label" x={g.px} y={H - 18} text-anchor="middle">{g.label}</text>
+        </>
+      ) : (
+        <>
+          <line class={g.v === 0 ? "chart__axis" : "chart__grid"} x1={10} x2={W - 10} y1={g.px} y2={g.px} />
+          <text class="chart__grid-label" x={10} y={g.px - 5}>{g.label}</text>
+        </>
+      ),
+    )}
+
+    {cells.map((c) => (
+      <g style={`--i:${c.idx}; --bar-fill:${c.color}`}>
+        <rect
+          class={`chart__bar${c.highlight ? " is-highlight" : ""}${c.neg ? " is-neg" : ""}`}
+          x={c.x}
+          y={c.y}
+          width={c.w}
+          height={c.h}
+          rx="2"
+        />
+        {valueLabels && (
+          <text class="chart__value" x={c.lx} y={c.ly} text-anchor={c.anchor}>{fmt(c.value)}</text>
+        )}
+      </g>
+    ))}
+
+    {catLabels.map((l) => (
+      <text class="chart__cat" x={l.x} y={l.y} text-anchor={l.anchor}>{l.text}</text>
+    ))}
+  </svg>
+
+  {grouped && (
+    <ul class="chart__legend">
+      {series.map((s) => (
+        <li style={`--series:${s.color}`}>
+          <span class="chart__legend-swatch chart__legend-swatch--box" aria-hidden="true"></span>{s.name}
+        </li>
+      ))}
+    </ul>
+  )}
 </div>
 
-<style>
-.bar-chart { display: flex; flex-direction: column; gap: 0.5rem; }
-.bar-row { display: flex; align-items: center; gap: 0.75rem; }
-.bar-label { width: 120px; font-size: 0.8rem; text-align: right; flex-shrink: 0; }
-.bar-track { flex: 1; height: 20px; background: var(--bg); border-radius: 2px; overflow: hidden; }
-.bar-fill { height: 100%; border-radius: 2px; transition: width 1s ease; }
-.bar-value { width: 40px; font-size: 0.75rem; color: var(--text-dim); }
-</style>
+<script>
+  import "../../scripts/chart-anim.js";
+</script>

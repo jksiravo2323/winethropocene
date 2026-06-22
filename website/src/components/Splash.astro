@@ -1,25 +1,9 @@
 ---
-// Splash.astro — homepage splash / wordmark
-const { title } = Astro.props;
+// Winethropocene wordmark splash with reveal animation.
+// Single-word serif logotype — no dashes, no split (both were UBS-Hub hangovers).
 ---
-
-<section class="splash">
-  <div class="wordmark">
-    <span class="wine">WINE</span>
-    <span class="thro">THROPOCENE</span>
+<section class="splash" aria-label="Winethropocene">
+  <div class="splash__row">
+    <span class="splash__letters splash__title">Winethropocene</span>
   </div>
-  {title && <p class="tagline">{title}</p>}
 </section>
-
-<style>
-.splash { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; text-align: center; padding: 2rem; }
-.wordmark { display: flex; flex-direction: column; align-items: center; }
-.wine { font-family: Georgia, serif; font-size: 5rem; font-weight: 300; letter-spacing: 0.5em; color: var(--accent); }
-.thro { font-family: Georgia, serif; font-size: 2.5rem; font-weight: 300; letter-spacing: 0.3em; margin-top: -0.5rem; }
-.tagline { color: var(--text-dim); font-size: 1.1rem; margin-top: 2rem; }
-
-@media (max-width: 768px) {
-  .wine { font-size: 3rem; }
-  .thro { font-size: 1.5rem; }
-}
-</style>

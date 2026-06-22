@@ -5,9 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
+    "start": "astro dev",
     "build": "astro build",
-    "preview": "astro preview",
-    "deploy": "astro build && wrangler deploy"
+    "preview": "npm run build && wrangler dev",
+    "astro": "astro",
+    "cloud": "node scripts/glb-to-ply.mjs",
+    "deploy": "npm run build && wrangler deploy",
+    "cf-typegen": "wrangler types"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^12.6.13",

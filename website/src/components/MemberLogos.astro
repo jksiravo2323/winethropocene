@@ -1,11 +1,166 @@
 ---
-// MemberLogos.astro — placeholder for partner/institution logos
+// Network member logo wall.
+// Source list: docs/UBS_network_organisations.md (slide 12 logo wall).
+// Each member carries a short blurb describing its work and its interest in UBS,
+// surfaced on hover/focus. Logos sit on a uniform light card so that mixed-polarity
+// brand marks (dark-ink, white-ink and white-box logos alike) all read consistently
+// against the site's black background.
+import fs from "node:fs";
+import path from "node:path";
+
+export interface Props {
+  /** When set, render only the first N logos. Defaults to all. */
+  limit?: number;
+}
+
+interface Member {
+  slug: string;
+  name: string;
+  blurb: string;
+  /** Optional outbound link surfaced inside the hover caption. */
+  href?: string;
+  hrefLabel?: string;
+}
+
+const MEMBERS: Member[] = [
+  {
+    slug: "institute-for-global-prosperity",
+    name: "Institute for Global Prosperity (UCL)",
+    blurb:
+      "The UCL institute that coined the term Universal Basic Services in 2017 — the intellectual home of UBS.",
+  },
+  {
+    slug: "hot-or-cool",
+    name: "Hot or Cool Institute",
+    blurb:
+      "Sustainability think tank researching how to secure decent living standards for all within planetary boundaries.",
+  },
+  {
+    slug: "university-of-leeds",
+    name: "University of Leeds",
+    blurb:
+      "Researchers on sustainable consumption and living well within limits — leading the network's analysis stream.",
+  },
+  {
+    slug: "poverty-alliance",
+    name: "The Poverty Alliance",
+    blurb:
+      "Scotland's national anti-poverty network, campaigning for the strong universal services that loosen poverty's grip.",
+  },
+  {
+    slug: "wen",
+    name: "Wen (Women's Environmental Network)",
+    blurb:
+      "Community-led action at the meeting point of gender, environmental and social justice.",
+  },
+  {
+    slug: "camden",
+    name: "London Borough of Camden",
+    blurb:
+      "A London borough putting UBS into practice — prototyping free travel and connectivity offers for residents.",
+    href: "https://autonomy.work/portfolio/interview-implementing-universal-basic-services-ubs-in-camden/",
+    hrefLabel: "Read our interview with Camden",
+  },
+  {
+    slug: "abundance",
+    name: "Abundance",
+    blurb:
+      "A research collective advancing public-common strategies to democratise the economy and a just ecological transition.",
+  },
+  {
+    slug: "new-economics-foundation",
+    name: "New Economics Foundation",
+    blurb:
+      "Author of the Social Guarantee — the framework pushing universal basic services forward in UK policy.",
+  },
+  {
+    slug: "real-deal",
+    name: "REAL — A Post Growth Deal",
+    blurb:
+      "Building a post-growth policy agenda where universal provision underpins wellbeing beyond GDP.",
+  },
+  {
+    slug: "common-wealth",
+    name: "Common Wealth",
+    blurb:
+      "Think tank designing democratic ownership models for the infrastructure that meets society's shared needs.",
+  },
+  {
+    slug: "lse",
+    name: "London School of Economics",
+    blurb:
+      "Economic and social-policy research feeding the case for universal services.",
+  },
+  {
+    slug: "autonomy-institute",
+    name: "Autonomy Institute",
+    blurb:
+      "Independent research institute on work and economic policy — and host of the UBS Hub.",
+  },
+  {
+    slug: "demos-helsinki",
+    name: "Demos Helsinki",
+    blurb:
+      "Nordic think tank reimagining the welfare state and the next generation of universal public institutions.",
+  },
+  {
+    slug: "tower-hamlets",
+    name: "London Borough of Tower Hamlets",
+    blurb:
+      "A London borough advancing universal local provision, from food partnerships to inclusive economic strategy.",
+  },
+  {
+    slug: "robertson-trust",
+    name: "The Robertson Trust",
+    blurb:
+      "Scotland's largest independent funder, working to end poverty — the security universal provision aims to guarantee.",
+  },
+  {
+    slug: "communia",
+    name: "Communia",
+    blurb:
+      "German think tank for a democratic economy and public luxury — democratised public provision (Daseinsvorsorge).",
+  },
+];
+
+const MEMBERS_DIR = path.join(process.cwd(), "public", "assets", "members");
+const resolveLogo = (slug: string): string | null => {
+  for (const ext of ["png", "svg", "jpg", "jpeg", "webp"]) {
+    if (fs.existsSync(path.join(MEMBERS_DIR, `${slug}.${ext}`))) {
+      return `/assets/members/${slug}.${ext}`;
+    }
+  }
+  return null;
+};
+
+const { limit } = Astro.props;
+const items = (typeof limit === "number" ? MEMBERS.slice(0, limit) : MEMBERS)
+  .map((m) => ({ ...m, src: resolveLogo(m.slug) }))
+  .filter((m) => m.src);
 ---
 
-<div class="member-logos">
-  <slot />
-</div>
-
-<style>
-.member-logos { display: flex; gap: 2rem; align-items: center; justify-content: center; flex-wrap: wrap; opacity: 0.5; }
-</style>
+<ul class="member-wall" aria-label="UBS Hub network members">
+  {
+    items.map((m) => (
+      <li class="member-tile" tabindex="0" aria-label={`${m.name}. ${m.blurb}`}>
+        <span class="member-logo">
+          <img src={m.src} alt={m.name} loading="lazy" decoding="async" />
+        </span>
+        <span class="member-cap" aria-hidden="true">
+          <strong>{m.name}</strong>
+          <span class="member-cap__blurb">{m.blurb}</span>
+          {m.href && (
+            <a
+              class="member-cap__link"
+              href={m.href}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {m.hrefLabel ?? "Learn more"} →
+            </a>
+          )}
+        </span>
+      </li>
+    ))
+  }
+</ul>

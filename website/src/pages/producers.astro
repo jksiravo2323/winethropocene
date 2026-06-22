@@ -1,30 +1,47 @@
 ---
+export const prerender = true;
 import BaseLayout from "../layouts/BaseLayout.astro";
+import PointCloudBackdrop from "../components/PointCloudBackdrop.astro";
 import SectionHero from "../components/SectionHero.astro";
 import { getCollection } from "astro:content";
 
 const producers = await getCollection("producers");
-const featured = producers.filter(p => p.data.featured);
 ---
 
-<BaseLayout title="Producers">
-  <SectionHero title="Producers" subtitle="Winegrowers on the front lines of climate adaptation." accent="#8B2252" />
-  <div class="producer-grid">
-    {featured.map(p => (
-      <div class="producer-card">
-        <h2>{p.data.name}</h2>
-        <p class="region">{p.data.region}, {p.data.country}</p>
-        <p>{p.data.summary}</p>
-        {p.data.website && <a href={p.data.website} target="_blank">Visit website</a>}
-      </div>
-    ))}
-  </div>
-</BaseLayout>
+<BaseLayout title="Producers — Winethropocene" active="/producers">
+  <PointCloudBackdrop ply="/clouds/terroir-stone.ply" />
+  <section class="container container--wide">
+    <SectionHero name="Producers" />
+  </section>
 
-<style>
-.producer-grid { max-width: 1200px; margin: 0 auto; padding: 2rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.5rem; }
-.producer-card { border: 1px solid var(--border); border-radius: 4px; padding: 1.5rem; }
-.producer-card h2 { font-family: Georgia, serif; font-size: 1.25rem; font-weight: 300; margin: 0 0 0.25rem; }
-.region { font-size: 0.8rem; color: var(--accent); margin: 0 0 0.75rem; }
-.producer-card p { font-size: 0.85rem; color: var(--text-dim); line-height: 1.5; margin: 0 0 0.75rem; }
-</style>
+  <section class="container container--wide">
+    <p class="lead">
+      A directory of winegrowers at the front line of climate adaptation —
+      from the Andes to the Venice Lagoon, from Denmark to Patagonia.
+    </p>
+  </section>
+
+  {
+    producers.length === 0 ? (
+      <section class="container container--wide">
+        <p class="text-meta">Producer directory coming soon.</p>
+      </section>
+    ) : (
+      <section class="container container--wide">
+        <div class="team-grid" data-reveal>
+          {producers.map((p) => (
+            <div class="member">
+              <h3>{p.data.name}</h3>
+              <div class="role">{p.data.region}, {p.data.country}</div>
+              <p>{p.data.summary}</p>
+              {p.data.website && (
+                <a href={p.data.website} rel="noopener" target="_blank">
+                  Visit website →
+                </a>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
+    )}
+</BaseLayout>

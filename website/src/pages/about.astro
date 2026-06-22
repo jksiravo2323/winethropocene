@@ -1,58 +1,75 @@
 ---
+export const prerender = true;
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { getCollection } from "astro:content";
+import PointCloudBackdrop from "../components/PointCloudBackdrop.astro";
+import SectionHero from "../components/SectionHero.astro";
+import { getCollection, render } from "astro:content";
 
-const team = await getCollection("team");
-team.sort((a, b) => a.data.order - b.data.order);
+const members = (await getCollection("team")).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+const rendered = await Promise.all(members.map((m) => render(m)));
 ---
 
-<BaseLayout title="About" description="Winethropocene — an online magazine about wine, climate change, and adaptation.">
-  <section class="container" style="padding-top: clamp(2.5rem, 5vw, 4rem); padding-bottom: clamp(2rem, 4vw, 3rem);">
-    <header class="page-hero">
-      <h1 class="page-hero__title">About Winethropocene</h1>
-      <p class="page-hero__subtitle">An online magazine about wine, climate change, and adaptation.</p>
-    </header>
+<BaseLayout title="About — Winethropocene" active="/about">
+  <PointCloudBackdrop ply="/clouds/wine-glass.ply" />
+  <section class="container container--wide">
+    <SectionHero name="About" />
+  </section>
 
-    <div class="about-content">
-      <div class="about-prose">
-        <p>Climate change is redrawing the map of wine. From the frost-burned buds of Burgundy to the drought-stressed vines of Mendoza, from the saltwater seeping into Venice's lagoon vineyards to the first commercial Pinot Noir harvests in Denmark — the wine world is in motion.</p>
-        <p>Winethropocene reports from the front lines. We cover the regions, varieties, producers, and phenomena that are shaping the future of what we drink. Our articles are grounded in peer-reviewed research, anchored to primary sources, and written for anyone who cares about wine and the planet it comes from.</p>
-        <p>The name is a portmanteau of <em>wine</em> and <em>Anthropocene</em> — the proposed geological epoch defined by human influence on the Earth's climate and ecosystems. We are living through it, one vintage at a time.</p>
+  <section class="container container--wide">
+    <div class="cols-lead">
+      <div>
+        <p class="lead">
+          Winethropocene is an editorial project documenting wine in the age
+          of ecological disruption — not as tragedy and not as triumph, but as
+          a record of transformation.
+        </p>
+        <p>
+          Wine has been a mirror of human activity for more than seven
+          millennia. Conquest, migration, climate, and trade are written into
+          every vineyard, every harvest date, every shifting latitude of
+          production. Winethropocene reads the planet through that mirror.
+        </p>
+        <p>
+          We publish curated, research-backed content at the intersection of
+          climate science, viticulture, geopolitics, and culture. Our position
+          is revealed through selection and juxtaposition, not through
+          argument. We are informative, impersonal, and rigorous — an
+          editorial voice, not a personality.
+        </p>
       </div>
-
-      {team.length > 0 && (
-        <div class="about-team">
-          <h2 class="about-team__head">Team</h2>
-          <div class="team-grid">
-            {team.map((member) => (
-              <div class="team-card">
-                {member.data.photo && <img src={member.data.photo} alt={member.data.name} class="team-card__photo" />}
-                <div class="team-card__text">
-                  <h3 class="team-card__name">{member.data.name}</h3>
-                  <p class="team-card__role">{member.data.role}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <aside class="cols-lead__aside">
+        <span class="cols-lead__aside-eyebrow">Launching</span>
+        <h3 class="cols-lead__aside-title">15 August 2026</h3>
+        <p class="cols-lead__aside-meta">
+          On Instagram and at winethropocene.com.
+        </p>
+      </aside>
     </div>
   </section>
+
+  <hr class="section-rule" />
+
+  <section class="container container--narrow">
+    <h2 class="section-heading sticky-head">Editorial team</h2>
+    {members.length > 0 ? (
+      <div class="team-grid" data-reveal>
+        {members.map((m, i) => {
+          const { Content } = rendered[i];
+          return (
+            <div class="member">
+              <h3>{m.data.name}</h3>
+              <div class="role">{m.data.role}</div>
+              <div class="member__bio">
+                <Content />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    ) : (
+      <p class="text-meta">Team page coming soon.</p>
+    )}
+  </section>
 </BaseLayout>
-
-<style>
-.page-hero { max-width: 720px; margin-bottom: 2.5rem; }
-.page-hero__title { font-family: Georgia, serif; font-size: 2.5rem; font-weight: 300; margin: 0 0 0.5rem; }
-.page-hero__subtitle { color: var(--text-dim); font-size: 1.05rem; line-height: 1.6; margin: 0; }
-
-.about-content { max-width: 720px; }
-.about-prose { line-height: 1.75; font-size: 1.05rem; margin-bottom: 3rem; }
-.about-prose p { margin-bottom: 1.25rem; }
-
-.about-team__head { font-family: Georgia, serif; font-size: 1.3rem; font-weight: 300; margin-bottom: 1rem; }
-.team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }
-.team-card { display: flex; gap: 0.75rem; align-items: center; padding: 0.75rem; border: 1px solid var(--border); border-radius: 5px; }
-.team-card__photo { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
-.team-card__name { font-family: Georgia, serif; font-size: 1rem; margin: 0; }
-.team-card__role { font-size: 0.78rem; color: var(--text-dim); margin: 0.1rem 0 0; }
-</style>

@@ -1,17 +1,12 @@
 ---
+export const prerender = true;
 import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
-<BaseLayout title="404 — Page Not Found">
-  <div class="not-found">
-    <h1>404</h1>
-    <p>Page not found.</p>
-    <a href="/">Return home</a>
-  </div>
+<BaseLayout title="Page not found — Winethropocene">
+  <section class="container container--wide" style="padding-top: clamp(6rem, 10vw, 10rem); padding-bottom: clamp(6rem, 10vw, 10rem); text-align: center;">
+    <h1 style="font-size: clamp(3rem, 6vw, 5rem); margin-bottom: 1rem;">404</h1>
+    <p class="lead" style="margin: 0 auto 2rem;">This page doesn't exist. The vine may have moved north.</p>
+    <a class="btn" href="/">Return home</a>
+  </section>
 </BaseLayout>
-
-<style>
-.not-found { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 50vh; text-align: center; }
-.not-found h1 { font-family: Georgia, serif; font-size: 4rem; font-weight: 300; color: var(--accent); margin: 0; }
-.not-found p { color: var(--text-dim); margin: 1rem 0; }
-</style>

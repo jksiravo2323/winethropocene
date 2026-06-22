@@ -1,18 +1,121 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#0D0D0D"/><stop offset="35%" stop-color="#0A1118"/><stop offset="100%" stop-color="#080F16"/>
+      <stop offset="0%" stop-color="#0D0D0D"/>
+      <stop offset="35%" stop-color="#0A1118"/>
+      <stop offset="100%" stop-color="#080F16"/>
     </linearGradient>
+    <linearGradient id="waterGrad" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#4A90D9" stop-opacity="0.12"/>
+      <stop offset="60%" stop-color="#4A90D9" stop-opacity="0.04"/>
+      <stop offset="100%" stop-color="#4A90D9" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="dryGrad" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#C4743E" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#C4743E" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="blur1">
+      <feGaussianBlur stdDeviation="1"/>
+    </filter>
   </defs>
   <rect width="1200" height="630" fill="url(#bg)"/>
   <rect x="0" y="0" width="1200" height="4" fill="#4A90D9"/>
+
+  <!-- Left: illustration area — cracked reservoir with vineyard -->
   <rect x="30" y="30" width="460" height="570" rx="3" fill="#0D0D0D" stroke="#4A90D9" stroke-opacity="0.12" stroke-width="1"/>
-  <text x="540" y="160" font-family="Georgia,serif" font-size="48" font-weight="300" fill="#F5F0EB"><tspan x="540" dy="0">Water Wars</tspan></text>
-  <line x1="540" y1="195" x2="840" y2="195" stroke="#4A90D9" stroke-opacity="0.3" stroke-width="0.5"/>
-  <text x="540" y="240" font-family="IBM Plex Sans,sans-serif" font-size="16" fill="rgba(245,240,235,0.62)">632 litres of water make one bottle of wine.</text>
-  <text x="540" y="270" font-family="IBM Plex Sans,sans-serif" font-size="15" fill="rgba(245,240,235,0.42)">In Chile, Argentina, and California, the water is running out.</text>
-  <rect x="540" y="340" rx="999" width="155" height="28" fill="none" stroke="#4A90D9" stroke-width="1"/>
-  <text x="617" y="359" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-size="11" letter-spacing="2" fill="#4A90D9">FIELD REPORT</text>
-  <text x="540" y="460" font-family="IBM Plex Sans,sans-serif" font-size="14" letter-spacing="4" fill="#8B2252" opacity="0.7">WINETHROPOCENE</text>
-  <text x="540" y="500" font-family="IBM Plex Sans,sans-serif" font-size="12" fill="rgba(245,240,235,0.28)">22 June 2026</text>
+
+  <!-- Reservoir / water body (top) — receding -->
+  <rect x="30" y="30" width="460" height="250" rx="3" fill="url(#waterGrad)"/>
+
+  <!-- Water surface -->
+  <g opacity="0.2">
+    <path d="M50,140 Q100,135 150,140 Q200,145 250,140 Q300,135 350,140 Q400,145 450,140" fill="none" stroke="#4A90D9" stroke-width="0.5"/>
+    <path d="M50,155 Q100,150 150,155 Q200,160 250,155 Q300,150 350,155 Q400,160 450,155" fill="none" stroke="#4A90D9" stroke-width="0.4"/>
+    <path d="M50,170 Q100,165 150,170 Q200,175 250,170 Q300,165 350,170 Q400,175 450,170" fill="none" stroke="#4A90D9" stroke-width="0.3"/>
+  </g>
+
+  <!-- Receding water line marks -->
+  <g opacity="0.15">
+    <line x1="60" y1="200" x2="420" y2="200" stroke="#4A90D9" stroke-width="0.3" stroke-dasharray="2,4"/>
+    <line x1="60" y1="220" x2="420" y2="220" stroke="#4A90D9" stroke-width="0.3" stroke-dasharray="2,4"/>
+    <line x1="60" y1="240" x2="420" y2="240" stroke="#4A90D9" stroke-width="0.3" stroke-dasharray="2,4"/>
+  </g>
+
+  <!-- Cracked earth / dry reservoir bed (bottom of reservoir) -->
+  <rect x="30" y="250" width="460" height="30" fill="url(#dryGrad)"/>
+  <g opacity="0.3">
+    <path d="M60,280 L80,270 L110,280 L80,282 Z" fill="none" stroke="#C4743E" stroke-width="0.4"/>
+    <path d="M140,280 L165,268 L195,280 L165,283 Z" fill="none" stroke="#C4743E" stroke-width="0.4"/>
+    <path d="M220,280 L250,265 L280,280 L250,283 Z" fill="none" stroke="#C4743E" stroke-width="0.4"/>
+    <path d="M300,280 L325,272 L360,280 L325,282 Z" fill="none" stroke="#C4743E" stroke-width="0.4"/>
+    <path d="M380,280 L410,269 L440,280 L410,283 Z" fill="none" stroke="#C4743E" stroke-width="0.4"/>
+    <path d="M100,280 L125,273 L155,280" fill="none" stroke="#C4743E" stroke-width="0.3"/>
+    <path d="M250,280 L275,267 L300,280" fill="none" stroke="#C4743E" stroke-width="0.3"/>
+  </g>
+
+  <!-- Vineyard rows below reservoir -->
+  <g opacity="0.4">
+    <path d="M60,360 Q100,330 140,360" fill="none" stroke="#8B2252" stroke-width="0.6"/>
+    <path d="M80,360 Q120,325 160,360" fill="none" stroke="#8B2252" stroke-width="0.6"/>
+    <path d="M100,360 Q140,328 180,360" fill="none" stroke="#8B2252" stroke-width="0.6"/>
+    <path d="M120,360 Q160,332 200,360" fill="none" stroke="#8B2252" stroke-width="0.6"/>
+    <path d="M140,360 Q180,330 220,360" fill="none" stroke="#8B2252" stroke-width="0.6"/>
+    <path d="M160,360 Q200,327 240,360" fill="none" stroke="#8B2252" stroke-width="0.6"/>
+    <path d="M180,360 Q220,333 260,360" fill="none" stroke="#8B2252" stroke-width="0.6"/>
+    <path d="M200,360 Q240,329 280,360" fill="none" stroke="#8B2252" stroke-width="0.6"/>
+    <path d="M220,360 Q260,331 300,360" fill="none" stroke="#8B2252" stroke-width="0.6"/>
+    <path d="M240,360 Q280,334 320,360" fill="none" stroke="#8B2252" stroke-width="0.6"/>
+    <path d="M260,360 Q300,328 340,360" fill="none" stroke="#8B2252" stroke-width="0.6"/>
+    <path d="M280,360 Q320,332 360,360" fill="none" stroke="#8B2252" stroke-width="0.6"/>
+    <path d="M300,360 Q340,330 380,360" fill="none" stroke="#8B2252" stroke-width="0.6"/>
+    <path d="M320,360 Q360,335 400,360" fill="none" stroke="#8B2252" stroke-width="0.6"/>
+  </g>
+
+  <!-- Water droplet — falling -->
+  <g opacity="0.5" filter="url(#blur1)">
+    <path d="M240,80 Q240,55 240,35 Q240,20 240,35 Q240,55 240,80" fill="none" stroke="#4A90D9" stroke-width="1"/>
+    <circle cx="240" cy="95" r="4" fill="none" stroke="#4A90D9" stroke-width="0.6"/>
+    <circle cx="240" cy="105" r="5" fill="none" stroke="#4A90D9" stroke-width="0.4"/>
+  </g>
+
+  <!-- Water stats inside illustration -->
+  <text x="240" y="175" text-anchor="middle" font-family="Georgia,serif" font-size="32" fill="#4A90D9" opacity="0.3">632 L</text>
+  <text x="240" y="198" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-size="9" fill="#4A90D9" opacity="0.3">per bottle of wine</text>
+
+  <!-- Region markers -->
+  <text x="80" y="440" font-family="IBM Plex Sans,sans-serif" font-size="9" letter-spacing="2" fill="#4A90D9" opacity="0.5">CHILE</text>
+  <text x="190" y="440" font-family="IBM Plex Sans,sans-serif" font-size="9" letter-spacing="2" fill="#4A90D9" opacity="0.4">ARGENTINA</text>
+  <text x="340" y="440" font-family="IBM Plex Sans,sans-serif" font-size="9" letter-spacing="2" fill="#4A90D9" opacity="0.3">CALIFORNIA</text>
+
+  <!-- Right: title and text -->
+  <text x="540" y="140" font-family="Georgia,serif" font-size="48" font-weight="300" fill="#F5F0EB">
+    <tspan x="540" dy="0">Water Wars</tspan>
+  </text>
+
+  <line x1="540" y1="178" x2="840" y2="178" stroke="#4A90D9" stroke-opacity="0.3" stroke-width="0.5"/>
+
+  <text x="540" y="220" font-family="IBM Plex Sans,sans-serif" font-size="16" fill="rgba(245,240,235,0.62)">
+    632 litres of water make one bottle of wine.
+  </text>
+  <text x="540" y="250" font-family="IBM Plex Sans,sans-serif" font-size="15" fill="rgba(245,240,235,0.42)">
+    In Chile, Argentina, and California, the water is
+  </text>
+  <text x="540" y="274" font-family="IBM Plex Sans,sans-serif" font-size="15" fill="rgba(245,240,235,0.42)">
+    running out — and the legal fights have begun.
+  </text>
+
+  <!-- Key question -->
+  <text x="540" y="335" font-family="Georgia,serif" font-size="18" fill="#4A90D9" opacity="0.55" font-style="italic">Who owns the water underneath</text>
+  <text x="540" y="360" font-family="Georgia,serif" font-size="18" fill="#4A90D9" opacity="0.55" font-style="italic">the world's great vineyards?</text>
+
+  <!-- Badge -->
+  <rect x="540" y="405" rx="999" width="155" height="28" fill="none" stroke="#4A90D9" stroke-width="1"/>
+  <text x="617" y="424" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-size="11" letter-spacing="2" fill="#4A90D9">FIELD REPORT</text>
+
+  <!-- Brand -->
+  <text x="540" y="500" font-family="IBM Plex Sans,sans-serif" font-size="14" letter-spacing="4" fill="#8B2252" opacity="0.7">WINETHROPOCENE</text>
+  <text x="540" y="540" font-family="IBM Plex Sans,sans-serif" font-size="12" fill="rgba(245,240,235,0.28)">22 June 2026</text>
+
+  <!-- Decorative corner -->
+  <rect x="950" y="470" width="250" height="160" fill="#4A90D9" fill-opacity="0.02"/>
 </svg>

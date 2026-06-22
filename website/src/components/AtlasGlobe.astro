@@ -1,16 +1,610 @@
 ---
-// AtlasGlobe.astro — 3D globe with billboarded pins and category filters
+// Interactive rotating globe for the atlas. The globe is a SAMPLED-FROM-TEXTURE
+// point cloud (public/clouds/globe-sampled.ply, from scripts/globe-sample-ply.mjs):
+// points scattered over the whole sphere, each coloured by a desaturated NASA
+// Blue Marble at its lon/lat, rendered as the site's ethereal "ghost" dots. A
+// dark backing sphere just under the surface occludes the far hemisphere so the
+// globe reads solid (no see-through oceans). Each entry is a billboarded
+// service-icon pin on the same rotating group, tinted its category accent and
+// glued to its real lat/lon.
+//
+// Speaks the shared atlas contracts:
+//   - dispatches `atlas:open` { slug }  on pin click  → opens the entry modal
+//   - listens for `atlas:filter` { category, country, statusGroup, access } → dims pins
+//   - listens for `atlas:view`   { view }             → pause/resume when hidden
+//   - dispatches `atlas:globe-failed` if WebGL is unavailable (→ fall back to map)
+import { loadAtlas, categoryMeta, statusGroupOf } from "../lib/atlas";
+
+const { entries } = await loadAtlas();
+const points = entries.map((e) => {
+  const meta = categoryMeta(e.data.category);
+  return {
+    slug: e.id,
+    title: e.data.title,
+    category: e.data.category,
+    categoryLabel: meta.label,
+    accent: meta.accent,
+    place: e.data.place,
+    country: e.data.country,
+    statusGroup: statusGroupOf(e.data.status) ?? "",
+    climate: e.data.climateZone ?? "",
+    summary: e.data.summary ?? e.data.subtitle ?? "",
+    image: e.data.image ?? "",
+    imageDots: e.data.image ? e.data.image.replace(/\.[a-z0-9]+$/i, ".dots.webp") : "",
+    lat: e.data.lat,
+    lon: e.data.lon,
+  };
+});
 ---
 
-<div id="atlas-globe-container" class="atlas-globe-container">
-  <div id="atlas-globe" class="atlas-globe"></div>
-  <div id="atlas-filters" class="atlas-filters"></div>
+<div
+  class="atlas-globe"
+  data-points={JSON.stringify(points)}
+  role="group"
+  aria-label="Rotating globe of UBS atlas entries"
+>
+  <canvas class="atlas-globe__canvas"></canvas>
+  <div class="atlas-globe__tooltip" role="status" hidden></div>
+  <p class="atlas-globe__hint">Drag to spin · scroll to zoom · hover a pin for details · click to open</p>
 </div>
 
+<script>
+  import * as THREE from "three";
+  import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+  import { createPointsModule } from "../lib/atlas-renderer/points.js";
+  import { POINTS_PRESETS } from "../lib/atlas-renderer/presets.js";
+  import { lonLatToVec3 } from "../lib/geo.js";
+
+  type Pt = {
+    slug: string;
+    title: string;
+    category: string;
+    categoryLabel: string;
+    accent: string;
+    place: string;
+    country: string;
+    statusGroup: string;
+    climate: string;
+    summary: string;
+    image: string;
+    imageDots: string;
+    lat: number;
+    lon: number;
+  };
+
+  const root = document.querySelector<HTMLDivElement>(".atlas-globe");
+  const canvas = root?.querySelector<HTMLCanvasElement>(".atlas-globe__canvas");
+  const tooltip = root?.querySelector<HTMLDivElement>(".atlas-globe__tooltip");
+
+  if (root && canvas && tooltip) {
+    const pts: Pt[] = JSON.parse(root.dataset.points ?? "[]");
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+    } catch (err) {
+      // No WebGL — tell the page to default to the 2D map and bail.
+      root.dataset.failed = "true";
+      window.dispatchEvent(new CustomEvent("atlas:globe-failed"));
+      throw err;
+    }
+
+    // One scene: the stippled-satellite sphere plus the billboarded pins, all on
+    // a single rotating group so the pins stay glued to the land.
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color("#000000");
+    const group = new THREE.Group();
+    scene.add(group);
+
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.01, 100);
+    camera.position.set(0, 0.16, 1.48);
+    // Reference camera distance: pins are sized to look right at this distance,
+    // then held to a constant on-screen size as you zoom (see updatePins).
+    const REF_DIST = camera.position.length();
+
+    const controls = new OrbitControls(camera, canvas);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.08;
+    controls.enablePan = false;
+    controls.enableZoom = true; // wheel / pinch zooms the globe
+    controls.zoomSpeed = 0.8;
+    controls.minDistance = 0.55; // closest (globe radius is 0.5) — near the surface to split tight clusters
+    controls.maxDistance = 2.4; // farthest — keeps the globe framed
+    // Manual drag-to-spin. On phones a touch drag covers far more globe per
+    // pixel than a mouse, so it reads as twitchy — 30% gentler there. The
+    // auto-spin (ROT) is unchanged.
+    const isMobile = window.matchMedia("(max-width: 800px)").matches;
+    controls.rotateSpeed = isMobile ? 0.35 : 0.5;
+    controls.minPolarAngle = 0.35;
+    controls.maxPolarAngle = Math.PI - 0.35;
+
+    // --- Globe: a SAMPLED-FROM-TEXTURE point cloud (the AESTHETIC LAB's
+    // "Point cloud + Sampled from texture" look). public/clouds/globe-sampled.ply
+    // (scripts/globe-sample-ply.mjs) scatters points over the whole sphere, each
+    // coloured by a desaturated NASA Blue Marble at its lon/lat — so the ethereal
+    // dots wear the real planet's tones and cover the oceans too. Positions use
+    // lonLatToVec3 (R=0.5) so continents sit under their pins.
+    const PT_SIZE = 0.0028;
+    // Opaque backing sphere just under the surface: it's the SOLID "ocean" (the
+    // point cloud is land-only) and it occludes the far-hemisphere points (they
+    // depth-test against it) so the globe never reads see-through and pins behind
+    // it stay hidden. A hair above pure black so the ocean still reads as a body.
+    const backing = new THREE.Mesh(
+      new THREE.SphereGeometry(0.49, 64, 48),
+      new THREE.MeshBasicMaterial({ color: 0x0c0c0c }),
+    );
+    group.add(backing);
+
+    const land = createPointsModule({
+      scene: group, // nest the points in the rotating group so they spin with it
+      url: "/clouds/globe-sampled.ply",
+      initial: {
+        ...POINTS_PRESETS.ghost,
+        mode: "sampled", // colour each point from the baked Blue Marble tone
+        count: 150000, // globe-sampled.ply is baked at 150k land points (ocean culled)
+        size: PT_SIZE,
+        rot: 0, // we drive rotation via the group so we can pause it
+        additive: true, // additive → a soft ethereal glow on the land dots
+      },
+    });
+
+    // --- Pins: one billboarded icon sprite per entry, on the rotating group ---
+    const ICON_PX = 512; // rasterize SVGs large so pins stay crisp when zoomed in
+    const iconCache = new Map<string, THREE.CanvasTexture>();
+    function iconTexture(cat: string): THREE.CanvasTexture {
+      const cached = iconCache.get(cat);
+      if (cached) return cached;
+      const c = document.createElement("canvas");
+      c.width = c.height = ICON_PX;
+      const tex = new THREE.CanvasTexture(c);
+      tex.anisotropy = 4;
+      const img = new Image();
+      img.onload = () => {
+        const ctx = c.getContext("2d");
+        if (ctx) {
+          ctx.clearRect(0, 0, ICON_PX, ICON_PX);
+          ctx.drawImage(img, 0, 0, ICON_PX, ICON_PX);
+          tex.needsUpdate = true;
+        }
+      };
+      img.src = `/atlas/icons/${cat}.svg`;
+      iconCache.set(cat, tex);
+      return tex;
+    }
+
+    const PIN_SCALE = 0.043; // ~26% smaller than before (was 0.058)
+    const pins: THREE.Sprite[] = [];
+    for (const p of pts) {
+      const [x, y, z] = lonLatToVec3(p.lon, p.lat, 0.5);
+      const mat = new THREE.SpriteMaterial({
+        map: iconTexture(p.category),
+        color: new THREE.Color(p.accent),
+        transparent: true,
+        depthTest: false,
+        depthWrite: false,
+      });
+      const s = new THREE.Sprite(mat);
+      const dir = new THREE.Vector3(x, y, z).normalize();
+      s.position.set(x, y, z).addScaledVector(dir, 0.012); // lift above the surface
+      s.scale.setScalar(PIN_SCALE);
+      s.renderOrder = 2;
+      // `home` is the pin's true local position; the per-frame spread offsets
+      // from it and relaxes back to it as overlapping pins separate on zoom.
+      // `ox`/`oy` are the smoothed screen-space offset, eased each frame so pins
+      // glide to their spread positions instead of snapping (no jumpiness).
+      s.userData = { ...p, base: PIN_SCALE, idx: pins.length, home: s.position.clone(), ox: 0, oy: 0 };
+      group.add(s);
+      pins.push(s);
+    }
+
+    // --- State ---------------------------------------------------------------
+    const ROT = reduced ? 0 : 0.05; // rad/s — stately, ~126s per turn
+    let filter = { category: "all", country: "all", statusGroup: "all", access: "all" };
+    let running = true; // false while the Map view is showing
+    let dragging = false;
+    let hovered: THREE.Sprite | null = null;
+
+    controls.addEventListener("start", () => (dragging = true));
+    controls.addEventListener("end", () => (dragging = false));
+
+    // --- Hover / pick --------------------------------------------------------
+    const ray = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    let pointerInside = false;
+    let downAt: { x: number; y: number } | null = null;
+
+    function pick(clientX: number, clientY: number): THREE.Sprite | null {
+      const r = canvas!.getBoundingClientRect();
+      pointer.x = ((clientX - r.left) / r.width) * 2 - 1;
+      pointer.y = -((clientY - r.top) / r.height) * 2 + 1;
+      ray.setFromCamera(pointer, camera);
+      // intersectObjects skips invisible sprites (back-of-globe pins are hidden).
+      const hit = ray.intersectObjects(pins, false)[0];
+      return (hit?.object as THREE.Sprite) ?? null;
+    }
+
+    const esc = (t: string) =>
+      t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+    const CARD_W = 264; // keep in sync with .atlas-globe__tooltip width
+
+    function setHover(s: THREE.Sprite | null, clientX = 0, clientY = 0) {
+      hovered = s;
+      canvas!.style.cursor = s ? "pointer" : "";
+      if (s && tooltip) {
+        const d = s.userData as Pt;
+        const r = root!.getBoundingClientRect();
+        const media = d.imageDots
+          ? `background-image:url(&quot;${esc(d.imageDots)}&quot;)`
+          : `background-image:linear-gradient(135deg, ${d.accent}, rgba(0,0,0,0.35))`;
+        tooltip.innerHTML =
+          `<div class="atlas-globe__card-head">${esc(d.title)}</div>` +
+          `<div class="atlas-globe__card-body">` +
+          `<span class="atlas-globe__card-media" style="${media}"></span>` +
+          `<span class="atlas-globe__card-meta">` +
+          `<span class="atlas-globe__card-cat" style="color:${d.accent}">${esc(d.categoryLabel)}</span>` +
+          (d.place ? `<span class="atlas-globe__card-place">${esc(d.place)}</span>` : "") +
+          (d.summary ? `<p class="atlas-globe__card-summary">${esc(d.summary)}</p>` : "") +
+          `</span></div>`;
+        // Centre over the pin, clamped so the card never spills off the sides.
+        const half = CARD_W / 2 + 8;
+        const cx = Math.max(half, Math.min(r.width - half, clientX - r.left));
+        const py = clientY - r.top;
+        // Flip below the pin when there isn't room to sit above it.
+        tooltip.classList.toggle("atlas-globe__tooltip--below", py < 180);
+        tooltip.style.left = `${cx}px`;
+        tooltip.style.top = `${py}px`;
+        tooltip.hidden = false;
+      } else if (tooltip) {
+        tooltip.hidden = true;
+      }
+    }
+
+    canvas.addEventListener("pointerenter", () => (pointerInside = true));
+    canvas.addEventListener("pointerleave", () => {
+      pointerInside = false;
+      setHover(null);
+    });
+    canvas.addEventListener("pointermove", (e) => {
+      setHover(pick(e.clientX, e.clientY), e.clientX, e.clientY);
+    });
+    canvas.addEventListener("pointerdown", (e) => {
+      downAt = { x: e.clientX, y: e.clientY };
+    });
+    canvas.addEventListener("pointerup", (e) => {
+      if (downAt) {
+        const moved = Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y);
+        const s = hovered ?? pick(e.clientX, e.clientY);
+        if (moved < 6 && s) {
+          window.dispatchEvent(
+            new CustomEvent("atlas:open", {
+              detail: { slug: (s.userData as Pt).slug },
+            }),
+          );
+        }
+      }
+      downAt = null;
+    });
+
+    // --- Per-frame: backface fade + perspective sizing + screen-space spread ---
+    // Overlapping pins (e.g. Glasgow + Dundee) are nudged apart ON SCREEN by just
+    // enough to clear each other, then that offset is re-projected into a tangent
+    // world offset. As you zoom in, the real gap grows past the icon size, the
+    // overlap vanishes, and every pin relaxes back onto its true location.
+    const camDir = new THREE.Vector3();
+    const camRight = new THREE.Vector3();
+    const camUp = new THREE.Vector3();
+    const homeWorld = new THREE.Vector3();
+    const ndc = new THREE.Vector3();
+    const off = new THREE.Vector3();
+    const finalWorld = new THREE.Vector3();
+    // Reused scratch list of on-screen pin candidates for the spread pass.
+    const cand: {
+      s: THREE.Sprite;
+      mat: THREE.SpriteMaterial;
+      home: THREE.Vector3;
+      o: number;
+      scl: number;
+      dist: number;
+      sx0: number;
+      sy0: number; // true projected position
+      sx: number;
+      sy: number; // position after spread
+      r: number;
+      idx: number;
+      hover: boolean;
+    }[] = [];
+
+    function updatePins(dt: number) {
+      camDir.copy(camera.position).normalize();
+      camera.updateMatrixWorld();
+      group.updateMatrixWorld();
+      camRight.setFromMatrixColumn(camera.matrixWorld, 0); // screen-right in world
+      camUp.setFromMatrixColumn(camera.matrixWorld, 1); // screen-up in world
+      // Base on-screen size is held constant as you zoom out (sizeComp == t) and
+      // actively shrunk as you zoom in (t^1.6) so tight clusters pull apart.
+      const t = camera.position.length() / REF_DIST;
+      const sizeComp = t <= 1 ? Math.pow(t, 1.6) : t;
+      const w = canvas!.clientWidth || 1;
+      const h = canvas!.clientHeight || 1;
+      // World→pixel factor for a unit length at distance 1: h / (2·tan(fov/2)).
+      const projK = h / (2 * Math.tan((camera.fov * Math.PI) / 360));
+
+      // Pass 1 — fade + size + project each pin from its TRUE (home) position.
+      cand.length = 0;
+      for (const s of pins) {
+        const d = s.userData as Pt & { base: number; idx: number; home: THREE.Vector3 };
+        const inFilter =
+          (filter.category === "all" || d.category === filter.category) &&
+          (filter.country === "all" || d.country === filter.country) &&
+          (filter.statusGroup === "all" || d.statusGroup === filter.statusGroup) &&
+          (filter.access === "all" || d.access === filter.access);
+        const mat = s.material as THREE.SpriteMaterial;
+        const isHover = s === hovered;
+        homeWorld.copy(d.home).applyMatrix4(group.matrixWorld);
+        const len = homeWorld.length() || 1;
+        const facing = homeWorld.dot(camDir) / len; // >0 = front hemisphere
+        // Backface fade: invisible behind the limb, smooth in across the horizon.
+        const o = inFilter ? THREE.MathUtils.smoothstep(facing, -0.05, 0.3) : 0;
+        if (o <= 0.02 && !isHover) {
+          mat.opacity = 0;
+          s.visible = false;
+          s.position.copy(d.home);
+          continue;
+        }
+        // Size scales linearly with viewing ANGLE (not cos facing), so pins change
+        // size at a steady rate across the face instead of staying flat then
+        // popping at the limb. Range 0.62→1.05 gives a clearer depth cue.
+        const frontness = 1 - Math.acos(THREE.MathUtils.clamp(facing, -1, 1)) / (Math.PI / 2);
+        const scl = d.base * sizeComp * (0.62 + 0.43 * frontness);
+        const dist = homeWorld.distanceTo(camera.position);
+        ndc.copy(homeWorld).project(camera);
+        const sx0 = (ndc.x * 0.5 + 0.5) * w;
+        const sy0 = (-ndc.y * 0.5 + 0.5) * h;
+        cand.push({
+          s,
+          mat,
+          home: d.home,
+          o,
+          scl,
+          dist,
+          sx0,
+          sy0,
+          sx: sx0,
+          sy: sy0,
+          r: ((scl * projK) / dist) * 0.5, // ≈ on-screen icon radius in px
+          idx: d.idx,
+          hover: isHover,
+        });
+      }
+
+      // Pass 2 — spread. Solve in a FIXED order (by idx) so the fan layout is
+      // fully deterministic: it depends only on the camera, never on which pin is
+      // hovered or on frame-to-frame depth ties. This is what stops the jumping —
+      // hover changes appearance (pass 3) but never the positions here.
+      cand.sort((a, b) => a.idx - b.idx);
+      const GAP = 1.12; // target centre spacing as a multiple of the two radii
+      for (let i = 0; i < cand.length; i++) {
+        const c = cand[i];
+        let sx = c.sx0;
+        let sy = c.sy0;
+        for (let iter = 0; iter < 8; iter++) {
+          let moved = false;
+          for (let j = 0; j < i; j++) {
+            const q = cand[j];
+            const minD = (c.r + q.r) * GAP;
+            let dx = sx - q.sx;
+            let dy = sy - q.sy;
+            let dd = Math.hypot(dx, dy);
+            if (dd < minD) {
+              if (dd < 1e-3) {
+                const a = c.idx * 2.399963; // golden angle → deterministic spread
+                dx = Math.cos(a);
+                dy = Math.sin(a);
+                dd = 1;
+              }
+              const push = minD - dd;
+              sx += (dx / dd) * push;
+              sy += (dy / dd) * push;
+              moved = true;
+            }
+          }
+          if (!moved) break;
+        }
+        c.sx = sx;
+        c.sy = sy;
+      }
+
+      // Pass 3 — apply. Ease each pin's screen offset toward its solved target,
+      // then re-project that to a tangent world offset. Smoothing absorbs the tiny
+      // per-frame changes from rotation/zoom so motion is fluid, not jumpy.
+      const k = 1 - Math.exp(-dt * 14); // frame-rate-independent smoothing (~70ms)
+      for (const c of cand) {
+        const d = c.s.userData as { ox: number; oy: number };
+        d.ox += (c.sx - c.sx0 - d.ox) * k;
+        d.oy += (c.sy - c.sy0 - d.oy) * k;
+        if (Math.abs(d.ox) > 0.05 || Math.abs(d.oy) > 0.05) {
+          const wpp = c.dist / projK; // world units per screen pixel at this depth
+          off.copy(camRight).multiplyScalar(d.ox * wpp).addScaledVector(camUp, -d.oy * wpp);
+          finalWorld.copy(c.home).applyMatrix4(group.matrixWorld).add(off);
+          c.s.position.copy(group.worldToLocal(finalWorld));
+        } else {
+          c.s.position.copy(c.home);
+        }
+        c.mat.opacity = c.hover ? 1 : c.o;
+        c.s.visible = c.hover || c.o > 0.02;
+        // Depth-sorted draw order: nearer pins paint over farther ones; hover tops all.
+        c.s.renderOrder = c.hover ? 100000 : Math.round((3 - c.dist) * 100) + 2;
+        c.s.scale.setScalar(c.scl * (c.hover ? 1.35 : 1));
+      }
+    }
+
+    // --- Sizing --------------------------------------------------------------
+    function resize() {
+      const w = canvas!.clientWidth;
+      const h = canvas!.clientHeight;
+      if (!w || !h) return;
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+    const ro = new ResizeObserver(() => resize());
+    ro.observe(canvas);
+    resize();
+
+    // --- Shared atlas events -------------------------------------------------
+    window.addEventListener("atlas:filter", (e) => {
+      const d = (e as CustomEvent<Partial<typeof filter>>).detail ?? {};
+      filter = {
+        category: d.category ?? "all",
+        country: d.country ?? "all",
+        statusGroup: d.statusGroup ?? "all",
+        access: d.access ?? "all",
+      };
+    });
+    window.addEventListener("atlas:view", (e) => {
+      const view = (e as CustomEvent<{ view: string }>).detail?.view;
+      if (view) {
+        running = view === "globe";
+        if (running) requestAnimationFrame(resize); // re-measure once shown
+      }
+    });
+
+    // --- Loop ----------------------------------------------------------------
+    const clock = new THREE.Clock();
+    function frame() {
+      requestAnimationFrame(frame);
+      const dt = clock.getDelta();
+      if (!running) return;
+      const spin = ROT > 0 && !dragging && !(pointerInside && hovered);
+      if (spin) group.rotation.y += ROT * dt;
+      controls.update();
+      // Hold points to a constant on-screen size when zooming in (cancel
+      // sizeAttenuation's 1/camDist growth); zoom-out keeps the attenuated falloff.
+      const t = camera.position.length() / REF_DIST;
+      land.setSize(PT_SIZE * Math.min(1, t));
+      updatePins(dt);
+      renderer.render(scene, camera);
+    }
+    frame();
+  }
+</script>
+
 <style>
-.atlas-globe-container { position: relative; width: 100%; height: 500px; }
-.atlas-globe { width: 100%; height: 100%; }
-.atlas-filters { position: absolute; bottom: 1rem; left: 50%; transform: translateX(-50%); display: flex; gap: 0.5rem; flex-wrap: wrap; }
-.atlas-filters button { padding: 0.3rem 0.8rem; border: 1px solid var(--border); border-radius: 999px; background: var(--bg); color: var(--text); font-size: 0.75rem; cursor: pointer; }
-.atlas-filters button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .atlas-globe {
+    position: relative;
+    /* Square (1:1) so the globe reads as a globe. Width drives height; capped
+       to the viewport height so a big square never overflows the screen. */
+    width: 100%;
+    max-width: min(100%, 86vh);
+    aspect-ratio: 1 / 1;
+    margin: 1.5rem auto 0;
+    border-radius: 12px;
+    /* No overflow:hidden — the hover card must be able to spill past the globe
+       edges. The canvas carries its own rounding so corners still look clipped. */
+    background: #000000;
+    touch-action: none; /* let the globe own drag + pinch-zoom gestures */
+  }
+  .atlas-globe__canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+  }
+  /* Hover card: brand-pink frame with a thick pink header holding the title,
+     then a body with category, place, a thumbnail and a short summary. */
+  .atlas-globe__tooltip {
+    position: absolute;
+    width: 264px;
+    transform: translate(-50%, calc(-100% - 14px)); /* above the pin by default */
+    pointer-events: none;
+    background: #0c0c0c;
+    border: 1.5px solid var(--pink);
+    border-radius: 10px;
+    overflow: hidden;
+    font-family: "IBM Plex Sans", -apple-system, sans-serif;
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.6);
+    z-index: 5;
+  }
+  /* Flipped to sit below the pin when there's no room above. */
+  .atlas-globe__tooltip--below {
+    transform: translate(-50%, 14px);
+  }
+  /* Card internals are injected via innerHTML, so they don't carry Astro's
+     scoping attribute — these rules must be :global to match them. */
+  :global(.atlas-globe__card-head) {
+    background: var(--pink);
+    color: #000;
+    padding: 0.55rem 0.7rem;
+    font-size: 0.92rem;
+    font-weight: 600;
+    line-height: 1.25;
+  }
+  :global(.atlas-globe__card-body) {
+    display: flex;
+    gap: 0.6rem;
+    padding: 0.6rem 0.7rem;
+  }
+  :global(.atlas-globe__card-media) {
+    flex: 0 0 60px;
+    width: 60px;
+    height: 60px;
+    border-radius: 6px;
+    background-size: cover;
+    background-position: center;
+    border: 1px solid var(--rule-faint);
+  }
+  :global(.atlas-globe__card-meta) {
+    min-width: 0; /* allow text + summary to wrap/ellipsis inside flex */
+  }
+  :global(.atlas-globe__card-cat) {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  :global(.atlas-globe__card-place) {
+    display: block;
+    margin-top: 0.1rem;
+    color: var(--fg-faint);
+    font-size: 0.72rem;
+  }
+  :global(.atlas-globe__card-summary) {
+    margin: 0.35rem 0 0;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 0.76rem;
+    line-height: 1.35;
+    /* clamp to 3 lines so long blurbs don't make a giant card */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .atlas-globe__hint {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0.6rem;
+    margin: 0;
+    text-align: center;
+    pointer-events: none;
+    color: var(--fg-faint);
+    font-size: 0.75rem;
+  }
+  @media (max-width: 800px) {
+    .atlas-globe__hint {
+      font-size: 0.7rem;
+    }
+    /* On phones the square globe is pinched by the container's side gutters,
+       leaving a small window. Break out to the full viewport width so the
+       globe is as large as the screen allows. */
+    .atlas-globe {
+      width: 100vw;
+      max-width: 100vw;
+      margin-inline: calc(50% - 50vw);
+    }
+  }
 </style>

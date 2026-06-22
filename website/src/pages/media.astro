@@ -1,15 +1,59 @@
 ---
+export const prerender = true;
 import BaseLayout from "../layouts/BaseLayout.astro";
+import PointCloudBackdrop from "../components/PointCloudBackdrop.astro";
 import SectionHero from "../components/SectionHero.astro";
+import { getCollection } from "astro:content";
+
+const press = (await getCollection("press")).sort(
+  (a, b) => (b.data.date?.getTime() ?? 0) - (a.data.date?.getTime() ?? 0),
+);
+
+const dateLabel = (d?: Date) =>
+  d
+    ? d.toLocaleDateString("en-GB", { month: "long", year: "numeric" })
+    : null;
 ---
 
-<BaseLayout title="Media">
-  <SectionHero title="Media" subtitle="Press coverage and media resources." accent="#8B2252" />
-  <div class="media-content">
-    <p>Media kit and press coverage coming soon. For immediate inquiries: <a href="mailto:press@winethropocene.com">press@winethropocene.com</a></p>
-  </div>
-</BaseLayout>
+<BaseLayout title="Media — Winethropocene" active="/media">
+  <PointCloudBackdrop ply="/clouds/barrel.ply" />
+  <section class="container container--wide">
+    <SectionHero name="Media" />
+  </section>
 
-<style>
-.media-content { max-width: 720px; margin: 0 auto; padding: 2rem; line-height: 1.7; text-align: center; }
-</style>
+  <section class="container container--wide">
+    <p class="lead">
+      Press coverage and media mentions.
+    </p>
+  </section>
+
+  {press.length === 0 ? (
+    <section class="container container--wide">
+      <p class="text-meta">Media coverage coming soon.</p>
+    </section>
+  ) : (
+    <section class="container container--wide">
+      <ul class="pub-list">
+        {press.map((p) => (
+          <li>
+            <div class="pub-title">
+              <h3>
+                {p.data.url ? (
+                  <a href={p.data.url} rel="noopener" target="_blank">{p.data.title}</a>
+                ) : (
+                  p.data.title
+                )}
+              </h3>
+              <span class="pub-year">{p.data.outlet}</span>
+            </div>
+            {dateLabel(p.data.date) && (
+              <p>
+                <span class="text-meta">{dateLabel(p.data.date)}</span>
+              </p>
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+</BaseLayout>

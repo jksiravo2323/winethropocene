@@ -1,73 +1,336 @@
 ---
+export const prerender = true;
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { getCollection } from "astro:content";
-import { categoryMeta, statusLabel } from "../lib/atlas";
-import type { AtlasEntry } from "../lib/atlas";
+import SectionHero from "../components/SectionHero.astro";
+import ProgrammeMap from "../components/ProgrammeMap.astro";
+import AtlasGlobe from "../components/AtlasGlobe.astro";
+import AtlasEntry from "../components/AtlasEntry.astro";
+import {
+  loadAtlas,
+  CATEGORIES,
+  STATUS_GROUPS,
+  categoryMeta,
+  statusLabel,
+  statusMeta,
+  statusGroupOf,
+  CLIMATE_ZONES,
+} from "../lib/atlas";
 
-const all = await getCollection("atlas");
-const bySlug = new Map<string, AtlasEntry>();
-for (const e of all) bySlug.set(e.slug, e);
+const { entries, bySlug } = await loadAtlas();
 
-const categories = [...new Set(all.map((e) => e.data.category))].sort();
-const statuses = [...new Set(all.map((e) => e.data.status).filter(Boolean))].sort();
+const usedCategories = CATEGORIES.filter((c) =>
+  entries.some((e) => e.data.category === c.key),
+);
+
+const usedCountries = [
+  ...new Set(entries.map((e) => e.data.country)),
+].sort((a, b) => a.localeCompare(b));
+
+const usedStatusGroups = STATUS_GROUPS.filter((g) =>
+  entries.some((e) => statusGroupOf(e.data.status) === g.key),
+);
+
+const usedClimateZones = CLIMATE_ZONES.filter((z) =>
+  entries.some((e) => e.data.climateZone === z.key),
+);
+
+const entryLabel = entries.length === 1 ? "entry" : "entries";
+
+const dotsSrc = (img?: string) =>
+  img ? img.replace(/\.[a-z0-9]+$/i, ".dots.webp") : undefined;
 ---
 
-<BaseLayout title="Atlas" description="A living map of wine regions, varieties, and climate phenomena.">
-  <section class="container" style="padding-top: clamp(2.5rem, 5vw, 4rem); padding-bottom: clamp(2rem, 4vw, 3rem);">
-    <header class="page-hero">
-      <h1 class="page-hero__title">Atlas</h1>
-      <p class="page-hero__subtitle">A living map of wine regions, grape varieties, and climate phenomena — where they are, how they're changing, and what's at stake.</p>
-    </header>
+<BaseLayout
+  title="Wine Atlas — Winethropocene"
+  description="A live atlas of wine regions, varieties, and climate phenomena — documenting where wine is thriving, adapting, and transforming."
+  active="/atlas"
+>
+  <section class="container container--wide">
+    <SectionHero name="Atlas" variant="splash" />
+  </section>
 
-    <div class="atlas-filters" role="group" aria-label="Filter atlas entries">
-      <div class="atlas-filters__group">
-        <span class="atlas-filters__label">Category</span>
-        {categories.map((cat) => (
-          <a href={`?category=${cat}`} class={`atlas-filter-chip${Astro.url.searchParams.get("category") === cat ? " atlas-filter-chip--active" : ""}`} style={Astro.url.searchParams.get("category") === cat ? `background:${categoryMeta(cat).color};border-color:${categoryMeta(cat).color};color:#fff` : `--chip-color:${categoryMeta(cat).color}`}>
-            {categoryMeta(cat).label}
-          </a>
-        ))}
-        {Astro.url.searchParams.has("category") && <a href="?" class="atlas-filter-chip atlas-filter-chip--clear">Clear</a>}
+  <section class="container container--narrow">
+    <p class="lead">
+      A live atlas of wine regions, grape varieties, and climate phenomena —
+      tracking where wine is thriving, adapting, at risk, and transforming
+      under climate pressure.
+    </p>
+    <p class="text-meta">
+      {entries.length} {entryLabel} mapped so far across {usedCategories.length} categor{usedCategories.length === 1 ? "y" : "ies"}.
+      Drag the globe to spin and hover a pin for its name, or switch to the flat
+      map — click any pin or card to open the full entry.
+    </p>
+  </section>
+
+  <section class="container container--wide" id="atlas-view">
+    <div class="atlas-view-toggle" role="tablist" aria-label="Choose map view">
+      <button
+        type="button"
+        class="atlas-view-toggle__btn is-active"
+        data-view="globe"
+        aria-pressed="true"
+      >
+        Globe
+      </button>
+      <button
+        type="button"
+        class="atlas-view-toggle__btn"
+        data-view="map"
+        aria-pressed="false"
+      >
+        Map
+      </button>
+    </div>
+    <div class="atlas-view" data-view="globe">
+      <AtlasGlobe />
+    </div>
+    <div class="atlas-view" data-view="map" hidden>
+      <ProgrammeMap />
+    </div>
+  </section>
+
+  <section class="container container--wide" id="atlas-browse">
+    <h2 class="section-heading sticky-head">Browse entries</h2>
+
+    <div class="atlas-filters">
+      <div class="atlas-filter" role="group" aria-label="Filter by category">
+        <button type="button" class="atlas-filter__chip is-active" data-cat="all">
+          All
+        </button>
+        {
+          usedCategories.map((c) => (
+            <button
+              type="button"
+              class="atlas-filter__chip"
+              data-cat={c.key}
+              style={`--accent:${c.accent}`}
+            >
+              {c.label}
+            </button>
+          ))
+        }
+      </div>
+
+      <div class="atlas-filter-row">
+        <label class="atlas-select">
+          <span class="atlas-select__label">Country</span>
+          <select class="atlas-select__input" data-filter="country">
+            <option value="all">All countries</option>
+            {usedCountries.map((c) => <option value={c}>{c}</option>)}
+          </select>
+        </label>
+
+        <label class="atlas-select">
+          <span class="atlas-select__label">Status</span>
+          <select class="atlas-select__input" data-filter="status">
+            <option value="all">Any status</option>
+            {
+              usedStatusGroups.map((g) => (
+                <option value={g.key}>{g.label}</option>
+              ))
+            }
+          </select>
+        </label>
+
+        <label class="atlas-select">
+          <span class="atlas-select__label">Climate</span>
+          <select class="atlas-select__input" data-filter="climate">
+            <option value="all">Any climate</option>
+            {usedClimateZones.map((z) => <option value={z.key}>{z.label}</option>)}
+          </select>
+        </label>
+
+        <button type="button" class="atlas-filter-clear" data-clear-filters hidden>
+          Clear filters
+        </button>
+        <span class="atlas-filter-count" aria-live="polite"></span>
       </div>
     </div>
 
-    <div class="atlas-grid">
-      {all.map((entry) => (
-        <a href={`/atlas/${entry.slug}`} class="atlas-card">
-          <div class="atlas-card__header">
-            <span class="atlas-card__cat" style={`color:${categoryMeta(entry.data.category).color}`}>{categoryMeta(entry.data.category).label}</span>
-            {entry.data.status && (
-              <span class="atlas-card__status">{statusLabel(entry.data.status)}</span>
-            )}
-          </div>
-          <h2 class="atlas-card__title">{entry.data.title}</h2>
-          <p class="atlas-card__place">{entry.data.place}, {entry.data.country}</p>
-          {entry.data.summary && <p class="atlas-card__summary">{entry.data.summary}</p>}
-        </a>
-      ))}
-    </div>
+    <ul class="atlas-cards">
+      {
+        entries.map((e) => {
+          const cat = categoryMeta(e.data.category);
+          const img = e.data.image;
+          const dots = dotsSrc(img);
+          return (
+            <li
+              class="atlas-card-li"
+              data-cat={e.data.category}
+              data-country={e.data.country}
+              data-status={statusGroupOf(e.data.status)}
+              data-climate={e.data.climateZone ?? ""}
+            >
+              <button
+                type="button"
+                class="atlas-card"
+                data-slug={e.id}
+                aria-label={`Open ${e.data.title}`}
+                style={`--accent:${cat.accent}`}
+              >
+                <span class="atlas-card__media">
+                  {img && dots ? (
+                    <>
+                      <img class="atlas-card__photo" src={img} alt="" loading="lazy" />
+                      <img class="atlas-card__dots" src={dots} alt="" loading="lazy" />
+                    </>
+                  ) : (
+                    <span
+                      class="atlas-card__gradient"
+                      style={`background: linear-gradient(135deg, ${cat.accent}, color-mix(in srgb, ${cat.accent} 40%, #000))`}
+                    />
+                  )}
+                </span>
+                <span class="atlas-card__body">
+                  <span class="atlas-card__cat">{cat.label}</span>
+                  <span class="atlas-card__title">{e.data.title}</span>
+                  <span class="atlas-card__place">{e.data.place}</span>
+                  <span class="atlas-card__summary">{e.data.summary}</span>
+                  {e.data.status && (
+                    <span class="atlas-card__status">
+                      <span
+                        class="atlas-status-dot"
+                        style={`--c:${statusMeta(e.data.status)?.color ?? "#9aa0a6"}`}
+                        aria-hidden="true"
+                      />
+                      {statusLabel(e.data.status)}
+                    </span>
+                  )}
+                </span>
+              </button>
+            </li>
+          );
+        })
+      }
+    </ul>
+    <p class="atlas-empty" hidden>No entries match these filters.</p>
   </section>
+
+  <!-- Modals -->
+  {
+    entries.map((e) => (
+      <dialog id={`entry-${e.id}`} class="atlas-modal" aria-label={e.data.title}>
+        <div class="atlas-modal__bar">
+          <a class="atlas-modal__full" href={`/atlas/${e.id}`}>Open full page ↗</a>
+          <button type="button" class="atlas-modal__close" data-close aria-label="Close">✕</button>
+        </div>
+        <div class="atlas-modal__scroll">
+          <AtlasEntry entry={e} bySlug={bySlug} headingLevel={2} />
+        </div>
+      </dialog>
+    ))
+  }
 </BaseLayout>
 
-<style>
-.page-hero { max-width: 720px; margin-bottom: 2.5rem; }
-.page-hero__title { font-family: Georgia, serif; font-size: 2.5rem; font-weight: 300; margin: 0 0 0.5rem; }
-.page-hero__subtitle { color: var(--text-dim); font-size: 1.05rem; line-height: 1.6; margin: 0; }
+<script>
+  // Modal open/close
+  function openModal(slug) {
+    const dlg = document.getElementById(`entry-${slug}`) as HTMLDialogElement | null;
+    if (dlg && typeof dlg.showModal === "function") dlg.showModal();
+  }
 
-.atlas-filters { margin-bottom: 2rem; }
-.atlas-filters__group { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
-.atlas-filters__label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); margin-right: 0.5rem; }
-.atlas-filter-chip { padding: 0.3rem 0.8rem; border-radius: 999px; font-size: 0.75rem; border: 1px solid var(--border); color: var(--text-dim); }
-.atlas-filter-chip:hover { border-color: var(--chip-color, var(--accent)); color: var(--text); text-decoration: none; }
-.atlas-filter-chip--clear { font-size: 0.7rem; color: var(--text-faint); }
+  document.querySelectorAll<HTMLButtonElement>(".atlas-card").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const slug = btn.dataset.slug;
+      if (slug) openModal(slug);
+    });
+  });
 
-.atlas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.25rem; }
-.atlas-card { display: block; border: 1px solid var(--border); border-radius: 5px; padding: 1.25rem; transition: border-color 0.2s, background 0.2s; }
-.atlas-card:hover { border-color: var(--border-hover); background: var(--bg-card); text-decoration: none; }
-.atlas-card__header { display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
-.atlas-card__cat { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 500; }
-.atlas-card__status { font-size: 0.62rem; color: var(--text-dim); padding: 0.1rem 0.5rem; border: 1px solid var(--border); border-radius: 999px; }
-.atlas-card__title { font-family: Georgia, serif; font-size: 1.15rem; font-weight: 300; margin: 0 0 0.2rem; color: var(--text); }
-.atlas-card__place { font-size: 0.75rem; color: var(--text-dim); margin: 0 0 0.5rem; }
-.atlas-card__summary { font-size: 0.82rem; color: var(--text-dim); line-height: 1.55; margin: 0; }
-</style>
+  window.addEventListener("atlas:open", (e) => {
+    const slug = (e as CustomEvent<{ slug: string }>).detail?.slug;
+    if (slug) openModal(slug);
+  });
+
+  document.querySelectorAll<HTMLDialogElement>(".atlas-modal").forEach((dlg) => {
+    dlg.querySelector("[data-close]")?.addEventListener("click", () => dlg.close());
+    dlg.addEventListener("click", (ev) => {
+      if (ev.target === dlg) dlg.close();
+    });
+  });
+
+  // Filters
+  const chips = document.querySelectorAll<HTMLButtonElement>(".atlas-filter__chip");
+  const cards = document.querySelectorAll<HTMLLIElement>(".atlas-card-li");
+  const empty = document.querySelector<HTMLParagraphElement>(".atlas-empty");
+  const countrySel = document.querySelector<HTMLSelectElement>('select[data-filter="country"]');
+  const statusSel = document.querySelector<HTMLSelectElement>('select[data-filter="status"]');
+  const climateSel = document.querySelector<HTMLSelectElement>('select[data-filter="climate"]');
+  const clearBtn = document.querySelector<HTMLButtonElement>("[data-clear-filters]");
+  const countEl = document.querySelector<HTMLSpanElement>(".atlas-filter-count");
+  const total = cards.length;
+
+  const filter = { category: "all", country: "all", statusGroup: "all", climate: "all" };
+
+  function applyFilter() {
+    let shown = 0;
+    cards.forEach((li) => {
+      const okCat = filter.category === "all" || li.dataset.cat === filter.category;
+      const okCountry = filter.country === "all" || li.dataset.country === filter.country;
+      const okStatus = filter.statusGroup === "all" || li.dataset.status === filter.statusGroup;
+      const okClimate = filter.climate === "all" || li.dataset.climate === filter.climate;
+      const show = okCat && okCountry && okStatus && okClimate;
+      li.hidden = !show;
+      if (show) shown++;
+    });
+
+    if (empty) empty.hidden = shown !== 0;
+
+    const active = filter.category !== "all" || filter.country !== "all" || filter.statusGroup !== "all" || filter.climate !== "all";
+    if (clearBtn) clearBtn.hidden = !active;
+    if (countEl) {
+      countEl.textContent = active ? `${shown} of ${total} ${total === 1 ? "entry" : "entries"}` : "";
+    }
+
+    window.dispatchEvent(new CustomEvent("atlas:filter", { detail: { ...filter } }));
+  }
+
+  chips.forEach((chip) => {
+    chip.addEventListener("click", () => {
+      filter.category = chip.dataset.cat ?? "all";
+      chips.forEach((c) => c.classList.toggle("is-active", c === chip));
+      applyFilter();
+    });
+  });
+  countrySel?.addEventListener("change", () => {
+    filter.country = countrySel.value;
+    applyFilter();
+  });
+  statusSel?.addEventListener("change", () => {
+    filter.statusGroup = statusSel.value;
+    applyFilter();
+  });
+  climateSel?.addEventListener("change", () => {
+    filter.climate = climateSel.value;
+    applyFilter();
+  });
+  clearBtn?.addEventListener("click", () => {
+    filter.category = "all";
+    filter.country = "all";
+    filter.statusGroup = "all";
+    filter.climate = "all";
+    chips.forEach((c) => c.classList.toggle("is-active", c.dataset.cat === "all"));
+    if (countrySel) countrySel.value = "all";
+    if (statusSel) statusSel.value = "all";
+    if (climateSel) climateSel.value = "all";
+    applyFilter();
+  });
+
+  // View toggle
+  const viewBtns = document.querySelectorAll<HTMLButtonElement>(".atlas-view-toggle__btn");
+  const panes = document.querySelectorAll<HTMLDivElement>("#atlas-view .atlas-view");
+  function setView(view: string) {
+    viewBtns.forEach((b) => {
+      const on = b.dataset.view === view;
+      b.classList.toggle("is-active", on);
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+    panes.forEach((p) => {
+      p.hidden = p.dataset.view !== view;
+    });
+    window.dispatchEvent(new CustomEvent("atlas:view", { detail: { view } }));
+  }
+  viewBtns.forEach((b) =>
+    b.addEventListener("click", () => setView(b.dataset.view ?? "globe")),
+  );
+  window.addEventListener("atlas:globe-failed", () => setView("map"));
+</script>

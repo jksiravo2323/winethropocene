@@ -1,11 +1,132 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
-  <rect width="1200" height="630" fill="#0D0D0D"/>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0D0D0D"/>
+      <stop offset="30%" stop-color="#120E10"/>
+      <stop offset="100%" stop-color="#140D10"/>
+    </linearGradient>
+    <linearGradient id="bdxGlow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#8B2252" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#C4743E" stop-opacity="0.04"/>
+    </linearGradient>
+    <linearGradient id="vineGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8B2252" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#8B2252" stop-opacity="0.1"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
   <rect x="0" y="0" width="1200" height="4" fill="#8B2252"/>
-  <text x="520" y="160" font-family="Georgia,serif" font-size="42" font-weight="300" fill="#F5F0EB"><tspan x="520" dy="0">Bordeaux Adopts Hybrid Grapes</tspan></text>
-  <line x1="520" y1="195" x2="820" y2="195" stroke="#8B2252" stroke-opacity="0.3" stroke-width="0.5"/>
-  <text x="520" y="240" font-family="IBM Plex Sans,sans-serif" font-size="16" fill="rgba(245,240,235,0.62)">Six PIWI disease-resistant varieties approved for Bordeaux AOC</text>
-  <text x="520" y="270" font-family="IBM Plex Sans,sans-serif" font-size="15" fill="rgba(245,240,235,0.42)">Capped at 5% of vineyard area and 10% of any blend.</text>
-  <rect x="520" y="340" rx="999" width="150" height="28" fill="none" stroke="#8B2252" stroke-width="1"/>
-  <text x="595" y="359" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-size="11" letter-spacing="2" fill="#8B2252">CURATED BRIEF</text>
-  <text x="520" y="460" font-family="IBM Plex Sans,sans-serif" font-size="14" letter-spacing="4" fill="#8B2252" opacity="0.7">WINETHROPOCENE</text>
+
+  <!-- Left: illustration area — grape clusters + DNA helix + château silhouette -->
+  <rect x="30" y="30" width="460" height="570" rx="3" fill="#0D0D0D" stroke="#8B2252" stroke-opacity="0.15" stroke-width="1"/>
+  <rect x="30" y="30" width="460" height="570" rx="3" fill="url(#bdxGlow)"/>
+
+  <!-- Château silhouette (bottom) -->
+  <g opacity="0.25">
+    <rect x="80" y="520" width="160" height="80" fill="#8B2252"/>
+    <polygon points="80,520 160,460 240,520" fill="#8B2252"/>
+    <rect x="160" y="480" width="30" height="40" fill="#0D0D0D"/>
+    <rect x="200" y="530" width="20" height="20" fill="#0D0D0D"/>
+    <rect x="90" y="540" width="15" height="20" fill="#0D0D0D"/>
+    <rect x="120" y="540" width="15" height="20" fill="#0D0D0D"/>
+  </g>
+
+  <!-- Vineyard rows -->
+  <g opacity="0.35">
+    <path d="M60,510 Q120,470 180,510" fill="none" stroke="#8B2252" stroke-width="0.6"/>
+    <path d="M80,510 Q140,465 200,510" fill="none" stroke="#8B2252" stroke-width="0.6"/>
+    <path d="M100,510 Q160,462 220,510" fill="none" stroke="#8B2252" stroke-width="0.6"/>
+    <path d="M120,510 Q180,468 240,510" fill="none" stroke="#8B2252" stroke-width="0.6"/>
+    <path d="M140,510 Q200,470 260,510" fill="none" stroke="#8B2252" stroke-width="0.6"/>
+  </g>
+
+  <!-- DNA Helix (center) -->
+  <g opacity="0.5" filter="url(#glow)">
+    <path d="M180,160 Q220,140 260,160 Q300,180 340,160" fill="none" stroke="#C4743E" stroke-width="1.5"/>
+    <path d="M180,160 Q220,180 260,160 Q300,140 340,160" fill="none" stroke="#8B2252" stroke-width="1.5"/>
+    <!-- Cross bars -->
+    <line x1="200" y1="157" x2="200" y2="164" stroke="#8B2252" stroke-width="0.8" opacity="0.6"/>
+    <line x1="220" y1="162" x2="220" y2="155" stroke="#C4743E" stroke-width="0.8" opacity="0.6"/>
+    <line x1="240" y1="158" x2="240" y2="163" stroke="#8B2252" stroke-width="0.8" opacity="0.6"/>
+    <line x1="260" y1="162" x2="260" y2="155" stroke="#C4743E" stroke-width="0.8" opacity="0.6"/>
+    <line x1="280" y1="157" x2="280" y2="164" stroke="#8B2252" stroke-width="0.8" opacity="0.6"/>
+    <line x1="300" y1="162" x2="300" y2="155" stroke="#C4743E" stroke-width="0.8" opacity="0.6"/>
+    <line x1="320" y1="158" x2="320" y2="163" stroke="#8B2252" stroke-width="0.8" opacity="0.6"/>
+  </g>
+
+  <!-- Grape clusters -->
+  <g opacity="0.6">
+    <!-- Left cluster -->
+    <circle cx="140" cy="280" r="6" fill="#8B2252" opacity="0.5"/>
+    <circle cx="148" cy="275" r="6" fill="#8B2252" opacity="0.45"/>
+    <circle cx="135" cy="275" r="6" fill="#8B2252" opacity="0.45"/>
+    <circle cx="142" cy="268" r="6" fill="#8B2252" opacity="0.4"/>
+    <circle cx="152" cy="268" r="5" fill="#8B2252" opacity="0.4"/>
+    <circle cx="130" cy="268" r="5" fill="#8B2252" opacity="0.4"/>
+    <circle cx="146" cy="260" r="5" fill="#8B2252" opacity="0.35"/>
+    <circle cx="156" cy="262" r="5" fill="#8B2252" opacity="0.35"/>
+    <!-- Stem -->
+    <path d="M142,260 Q142,245 148,235" fill="none" stroke="#C4743E" stroke-width="0.8"/>
+    <path d="M148,235 Q152,225 150,215" fill="none" stroke="#C4743E" stroke-width="0.6"/>
+
+    <!-- Right cluster (PIWI — different color) -->
+    <circle cx="350" cy="350" r="7" fill="#C4743E" opacity="0.5"/>
+    <circle cx="360" cy="344" r="7" fill="#C4743E" opacity="0.45"/>
+    <circle cx="345" cy="344" r="7" fill="#C4743E" opacity="0.45"/>
+    <circle cx="354" cy="336" r="6" fill="#C4743E" opacity="0.4"/>
+    <circle cx="365" cy="337" r="6" fill="#C4743E" opacity="0.4"/>
+    <circle cx="340" cy="338" r="6" fill="#C4743E" opacity="0.4"/>
+    <circle cx="358" cy="328" r="6" fill="#C4743E" opacity="0.35"/>
+    <circle cx="369" cy="330" r="5" fill="#C4743E" opacity="0.35"/>
+    <circle cx="349" cy="330" r="5" fill="#C4743E" opacity="0.35"/>
+    <!-- Stem -->
+    <path d="M354,328 Q354,310 358,298" fill="none" stroke="#8B2252" stroke-width="0.8"/>
+    <path d="M358,298 Q362,284 356,272" fill="none" stroke="#8B2252" stroke-width="0.6"/>
+    <!-- Leaf -->
+    <path d="M358,298 Q380,290 385,305 Q375,310 358,298" fill="#8B2252" opacity="0.15"/>
+  </g>
+
+  <!-- Labels on illustration -->
+  <text x="142" y="310" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-size="8" fill="#8B2252" opacity="0.5">Vitis vinifera</text>
+  <text x="354" y="385" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-size="8" fill="#C4743E" opacity="0.5">PIWI hybrid</text>
+
+  <!-- Hybrid connector -->
+  <path d="M160,210 Q260,180 340,230" fill="none" stroke="#8B2252" stroke-width="0.4" stroke-dasharray="3,4" opacity="0.3"/>
+
+  <!-- Right: title and text -->
+  <text x="540" y="140" font-family="Georgia,serif" font-size="42" font-weight="300" fill="#F5F0EB">
+    <tspan x="540" dy="0">Bordeaux Adopts</tspan>
+    <tspan x="540" dy="54">Hybrid Grapes</tspan>
+  </text>
+
+  <line x1="540" y1="178" x2="840" y2="178" stroke="#8B2252" stroke-opacity="0.3" stroke-width="0.5"/>
+
+  <text x="540" y="218" font-family="IBM Plex Sans,sans-serif" font-size="16" fill="rgba(245,240,235,0.62)">
+    Six PIWI disease-resistant varieties approved for Bordeaux AOC
+  </text>
+  <text x="540" y="248" font-family="IBM Plex Sans,sans-serif" font-size="15" fill="rgba(245,240,235,0.42)">
+    Capped at 5% of vineyard area and 10% of any blend.
+  </text>
+  <text x="540" y="272" font-family="IBM Plex Sans,sans-serif" font-size="15" fill="rgba(245,240,235,0.42)">
+    An insurance policy for a region under mounting disease pressure.
+  </text>
+
+  <!-- Variety callout -->
+  <text x="540" y="340" font-family="Georgia,serif" font-size="28" fill="#C4743E" opacity="0.6">Sauvignac · Floréal · Vidoc Noir</text>
+  <text x="540" y="368" font-family="Georgia,serif" font-size="28" fill="#C4743E" opacity="0.4">Voltis · Souvignier Gris</text>
+
+  <!-- Badge -->
+  <rect x="540" y="410" rx="999" width="150" height="28" fill="none" stroke="#8B2252" stroke-width="1"/>
+  <text x="615" y="429" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-size="11" letter-spacing="2" fill="#8B2252">CURATED BRIEF</text>
+
+  <!-- Brand -->
+  <text x="540" y="500" font-family="IBM Plex Sans,sans-serif" font-size="14" letter-spacing="4" fill="#8B2252" opacity="0.7">WINETHROPOCENE</text>
+  <text x="540" y="540" font-family="IBM Plex Sans,sans-serif" font-size="12" fill="rgba(245,240,235,0.28)">20 June 2026</text>
+
+  <!-- Decorative corner -->
+  <rect x="950" y="500" width="250" height="130" fill="#8B2252" fill-opacity="0.02"/>
 </svg>

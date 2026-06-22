@@ -1,15 +1,27 @@
 ---
+export const prerender = true;
 import BaseLayout from "../layouts/BaseLayout.astro";
+import PointCloudBackdrop from "../components/PointCloudBackdrop.astro";
 import SectionHero from "../components/SectionHero.astro";
 ---
 
-<BaseLayout title="Contact">
-  <SectionHero title="Contact" subtitle="Get in touch." accent="#8B2252" />
-  <div class="contact-content">
-    <p>For press inquiries, collaborations, or general questions: <a href="mailto:hello@winethropocene.xyz">hello@winethropocene.xyz</a></p>
-  </div>
-</BaseLayout>
+<BaseLayout title="Contact — Winethropocene" active="/contact">
+  <PointCloudBackdrop ply="/clouds/terroir-stone.ply" size="accent" corner="tr" />
+  <section class="container container--wide">
+    <SectionHero name="Contact" />
+  </section>
 
-<style>
-.contact-content { max-width: 720px; margin: 0 auto; padding: 2rem; line-height: 1.7; text-align: center; }
-</style>
+  <section class="container container--wide">
+    <p class="lead">
+      For editorial inquiries, press, and collaboration.
+    </p>
+    <p>
+      Winethropocene is an editorial project. We welcome contact from
+      researchers, winegrowers, and journalists working at the intersection
+      of wine and climate change.
+    </p>
+    <p>
+      <a href="mailto:hello@winethropocene.xyz">hello@winethropocene.xyz</a>
+    </p>
+  </section>
+</BaseLayout>

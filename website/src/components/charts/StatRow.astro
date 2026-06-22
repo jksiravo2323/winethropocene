@@ -1,19 +1,57 @@
 ---
-const { stats } = Astro.props;
+/**
+ * StatRow — a band of large "key figure" counters that count up on scroll.
+ * Use for the handful of headline numbers a report turns on. Keep to 2–4.
+ *
+ *   <StatRow stats={[
+ *     { value: 30, suffix: "%+", label: "UK food inflation since early 2021" },
+ *     { value: 50, prefix: "~", suffix: "%", label: "of UK food is imported" },
+ *   ]} />
+ *
+ * For a non-numeric headline (e.g. a range "£917–£1,247") pass `display`
+ * instead of `value` and it is shown verbatim (no count-up).
+ */
+export interface Stat {
+  /** Numeric target — animated from 0. Omit when using `display`. */
+  value?: number;
+  /** Verbatim headline string (e.g. a range) — shown instead of a counter. */
+  display?: string;
+  prefix?: string;
+  suffix?: string;
+  /** Decimal places for the counter. */
+  decimals?: number;
+  /** Caption under the figure. */
+  label?: string;
+}
+export interface Props {
+  stats: Stat[];
+  /** Accent override (hex). */
+  accent?: string;
+}
+const { stats, accent } = Astro.props;
 ---
 
-<div class="stat-row">
-  {stats.map(s => (
+<div class="stat-row" data-chart style={accent ? `--accent:${accent}` : undefined}>
+  {stats.map((s) => (
     <div class="stat">
-      <span class="stat-value">{s.display}</span>
-      <span class="stat-label">{s.label}</span>
+      <span class="stat__value">
+        {s.value != null ? (
+          <span
+            class="stat__num"
+            data-count-to={s.value}
+            data-count-decimals={s.decimals ?? 0}
+            data-count-prefix={s.prefix ?? ""}
+            data-count-suffix={s.suffix ?? ""}
+          >{`${s.prefix ?? ""}${s.value}${s.suffix ?? ""}`}</span>
+        ) : (
+          <span class="stat__num">{s.display}</span>
+        )}
+      </span>
+      {s.label && <span class="stat__label">{s.label}</span>}
     </div>
   ))}
 </div>
 
-<style>
-.stat-row { display: flex; gap: 1.5rem; flex-wrap: wrap; }
-.stat { flex: 1; min-width: 200px; }
-.stat-value { display: block; font-family: Georgia, serif; font-size: 2rem; color: var(--accent); }
-.stat-label { display: block; font-size: 0.8rem; color: var(--text-dim); margin-top: 0.25rem; }
-</style>
+<script>
+  import "../../scripts/chart-anim.js";
+</script>

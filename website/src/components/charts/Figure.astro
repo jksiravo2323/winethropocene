@@ -1,17 +1,44 @@
 ---
-const { n, title } = Astro.props;
+/**
+ * Figure — the standard frame for any report visual (chart, table, image).
+ * Provides the consistent eyebrow ("Figure N"), title, optional caption and
+ * source line, and the rule motif used across the site. Wrap a chart with it:
+ *
+ *   <Figure n={2} title="Cumulative price rise by item" source="ONS, 2025">
+ *     <BarChart ... />
+ *   </Figure>
+ *
+ * `n` is optional — omit it for un-numbered visuals.
+ */
+export interface Props {
+  /** Figure number (shown as "Fig. N"). */
+  n?: number;
+  /** Figure title — the headline above the visual. */
+  title?: string;
+  /** Longer caption / interpretation, shown under the visual. */
+  caption?: string;
+  /** Source line, e.g. "ONS Consumer Price Inflation, 2025". */
+  source?: string;
+  /** Accent override (hex). Inherits the report accent otherwise. */
+  accent?: string;
+}
+const { n, title, caption, source, accent } = Astro.props;
 ---
 
-<figure class="chart-figure">
-  {title && <figcaption><span class="fig-n">Figure {n}</span> {title}</figcaption>}
-  <div class="figure-content">
+<figure class="fig" style={accent ? `--accent:${accent}` : undefined}>
+  {(n != null || title) && (
+    <figcaption class="fig__head">
+      {n != null && <span class="fig__num">Fig. {n}</span>}
+      {title && <span class="fig__title">{title}</span>}
+    </figcaption>
+  )}
+  <div class="fig__body">
     <slot />
   </div>
+  {(caption || source) && (
+    <figcaption class="fig__foot">
+      {caption && <p class="fig__caption">{caption}</p>}
+      {source && <p class="fig__source">Source: {source}</p>}
+    </figcaption>
+  )}
 </figure>
-
-<style>
-.chart-figure { margin: 2rem 0; }
-figcaption { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.75rem; }
-.fig-n { font-weight: 600; color: var(--accent); }
-.figure-content { background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; padding: 1.5rem; }
-</style>

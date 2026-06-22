@@ -1,20 +1,134 @@
 ---
-// GeoTileMap.astro — tile-based geographic heatmap
-const { tiles, colorScale } = Astro.props;
+/**
+ * GeoTileMap — a tile-grid world choropleth. Each country is a square placed
+ * roughly by geography (see src/lib/geo-tiles.ts) and coloured by its value.
+ * No boundary data or projection needed; tiles fade in with a stagger.
+ *
+ *   import { worldTilesByRegion } from "../../lib/geo-tiles";
+ *   <GeoTileMap
+ *     tiles={worldTilesByRegion({ africa: 47, southAmerica: 46, asia: 44, europe: 36, northAmerica: 34, oceania: 33, middleEast: 42 })}
+ *     unit="%" legendLabel="Cumulative food inflation by 2050"
+ *   />
+ */
+import type { PlacedTile } from "../../lib/geo-tiles";
+
+export interface Props {
+  tiles: PlacedTile[];
+  min?: number;
+  max?: number;
+  colorLow?: string;
+  colorHigh?: string;
+  unit?: string;
+  decimals?: number;
+  legendLabel?: string;
+  /** Show the 3-letter country code inside each tile. */
+  showCodes?: boolean;
+  caption?: string;
+  accent?: string;
+}
+const {
+  tiles,
+  min,
+  max,
+  colorLow = "#13141d",
+  colorHigh = "#FFB4F9",
+  unit = "",
+  decimals = 0,
+  legendLabel,
+  showCodes = true,
+  caption,
+  accent,
+} = Astro.props;
+
+const vals = tiles.map((t) => t.value);
+const lo = min ?? Math.min(...vals);
+const hi = max ?? Math.max(...vals);
+const range = hi - lo || 1;
+
+const hexToRgb = (h: string) => {
+  const s = h.replace("#", "");
+  return [0, 2, 4].map((i) => parseInt(s.slice(i, i + 2), 16));
+};
+const rgbToHex = (r: number, g: number, b: number) =>
+  "#" + [r, g, b].map((x) => Math.round(Math.max(0, Math.min(255, x))).toString(16).padStart(2, "0")).join("");
+const mix = (c1: string, c2: string, t: number) => {
+  const a = hexToRgb(c1);
+  const b = hexToRgb(c2);
+  return rgbToHex(a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t);
+};
+
+const maxCol = Math.max(...tiles.map((t) => t.col));
+const maxRow = Math.max(...tiles.map((t) => t.row));
+const cell = 44;
+const gap = 4;
+const padT = 8;
+const padB = 56;
+const gridW = (maxCol + 1) * (cell + gap);
+const gridH = (maxRow + 1) * (cell + gap);
+const W = gridW;
+const H = padT + gridH + padB;
+
+const fmt = (v: number) =>
+  v.toLocaleString("en-GB", { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) + unit;
+
+// Light text on dark tiles, dark text on light tiles.
+const textOn = (t: number) => (t > 0.55 ? "#1a0f1a" : "rgba(255,255,255,0.85)");
+
+const placed = tiles.map((t, i) => {
+  const norm = (t.value - lo) / range;
+  return {
+    ...t,
+    x: t.col * (cell + gap),
+    y: padT + t.row * (cell + gap),
+    fill: mix(colorLow, colorHigh, norm),
+    text: textOn(norm),
+    i: t.row + t.col,
+  };
+});
+
+const legendStops = [0, 0.25, 0.5, 0.75, 1].map((t) => ({ t, color: mix(colorLow, colorHigh, t) }));
+const legendW = Math.min(gridW * 0.6, 320);
+const legendX = (W - legendW) / 2;
+const legendY = padT + gridH + 22;
 ---
 
-<div class="geo-tile-map">
-  {tiles.map(row => (
-    <div class="tile-row">
-      {row.map(tile => (
-        <div class="tile" style={`background:${colorScale ? colorScale(tile.value) : `rgba(var(--accent-rgb),${tile.value})`}`} title={tile.label}></div>
-      ))}
-    </div>
-  ))}
+<div class="chart chart--geotile" data-chart style={`max-width:${W}px;${accent ? `--accent:${accent}` : ""}`}>
+  <svg
+    viewBox={`0 0 ${W} ${H}`}
+    class="chart__svg"
+    role="img"
+    aria-label={caption ?? "World map"}
+    preserveAspectRatio="xMidYMid meet"
+  >
+    <defs>
+      <linearGradient id="geo-legend" x1="0" y1="0" x2="1" y2="0">
+        {legendStops.map((s) => (
+          <stop offset={`${s.t * 100}%`} stop-color={s.color} />
+        ))}
+      </linearGradient>
+    </defs>
+
+    {placed.map((t) => (
+      <g style={`--i:${t.i}`}>
+        <rect class="chart__cell" x={t.x} y={t.y} width={cell} height={cell} rx="3" style={`fill:${t.fill}`}>
+          <title>{t.label}: {fmt(t.value)}</title>
+        </rect>
+        {showCodes && (
+          <text class="chart__tile-code" x={t.x + cell / 2} y={t.y + cell / 2 + 4} text-anchor="middle" style={`fill:${t.text}`}>{t.code}</text>
+        )}
+      </g>
+    ))}
+
+    {/* Legend */}
+    <rect x={legendX} y={legendY} width={legendW} height="12" rx="2" fill="url(#geo-legend)" />
+    <text class="chart__grid-label" x={legendX} y={legendY + 30}>{fmt(lo)}</text>
+    <text class="chart__grid-label" x={legendX + legendW} y={legendY + 30} text-anchor="end">{fmt(hi)}</text>
+    {legendLabel && (
+      <text class="chart__grid-label" x={W / 2} y={legendY + 30} text-anchor="middle">{legendLabel}</text>
+    )}
+  </svg>
 </div>
 
-<style>
-.geo-tile-map { display: flex; flex-direction: column; gap: 2px; }
-.tile-row { display: flex; gap: 2px; }
-.tile { width: 20px; height: 20px; border-radius: 1px; }
-</style>
+<script>
+  import "../../scripts/chart-anim.js";
+</script>

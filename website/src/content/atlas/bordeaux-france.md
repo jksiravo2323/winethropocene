@@ -6,28 +6,37 @@ lat: 44.8
 lon: -0.6
 category: "region"
 subcategory: "red"
-summary: "The world's most famous red wine region is confronting a warmer, earlier harvest. The 2022 INAO decision to permit experimental PIWI hybrids, the 2022 harvest — the earliest since records began in 1491 — and the question of what Bordeaux tastes like in a 2°C-warmer world."
-subtitle: "The benchmark under pressure"
+summary: "The world's most copied wine region, now quietly permitting lab-bred disease-resistant hybrid grapes into its AOC system. Warmer, wetter seasons are increasing fungal disease pressure and forcing adaptation at the symbolic heart of traditional wine."
+subtitle: "The citadel adapts"
 status: "adapting"
 climateZone: "maritime"
-varieties: ["Merlot", "Cabernet Sauvignon", "Cabernet Franc", "Petit Verdot", "Malbec", "Sauvignon Blanc", "Sémillon"]
-elevation: "0–100m"
-primaryThreat: "temperature"
-period: "Roman era–present"
-tags: ["bordeaux", "france", "merlot", "cabernet-sauvignon", "harvest-shift", "piwi", "aoc"]
+varieties: ["Merlot", "Cabernet Sauvignon", "Cabernet Franc", "Sauvignac", "Floréal", "Vidoc Noir"]
+elevation: "5–100m"
+primaryThreat: "disease"
+period: "1st century–present"
+tags: ["bordeaux", "france", "piwi", "hybrid-grapes", "inao", "aoc", "disease-resistance"]
 confidence: "green"
-related: ["champagne-france", "bordeaux-hybrids"]
+related: ["champagne-france", "piwi-varieties"]
 references:
-  - { label: "INAO, Bordeaux AOC harvest regulations and PIWI experimental decree, 2022–2025", url: "https://www.inao.gouv.fr", kind: "primary" }
-  - { label: "CIVB (Conseil Interprofessionnel du Vin de Bordeaux), Annual Reports", url: "https://www.bordeaux.com", kind: "primary" }
+  - { label: "INAO VIFA decrees, 2025–2026", url: "https://www.inao.gouv.fr", kind: "primary" }
+  - { label: "CIVB (Conseil Interprofessionnel du Vin de Bordeaux), planting data", kind: "primary" }
   - { label: "Van Leeuwen et al., Nature Reviews Earth & Environment, 2024", url: "https://doi.org/10.1038/s43017-024-00521-5", kind: "primary" }
-  - { label: "Jones et al., PNAS, 2005 (harvest phenology)", kind: "primary" }
 ---
 
 ## Overview
 
-Bordeaux is the world's most famous and most emulated red wine region. Its classification system, dating to 1855, remains a global benchmark for wine quality and pricing. Its varieties — Merlot, Cabernet Sauvignon, Cabernet Franc — are planted on every continent where wine is made.
+Bordeaux is the world's most regulated, most traditional, and most copied wine region. Its AOC system, codified in 1936, defines permitted grape varieties, production methods, and geographical boundaries with a precision that has been exported to wine regions worldwide. For nearly a century, the system has been relatively stable.
 
-But Bordeaux is also one of the regions most visibly affected by climate change. Average temperatures have risen 0.9–1.2°C since pre-industrial levels. Harvest dates are two to three weeks earlier than in 1980. The 2022 harvest was the earliest since records began in 1491. Alcohol levels, which averaged 12–12.5% in the 1980s, routinely exceed 14% today.
+In 2025–2026, the INAO approved six PIWI hybrid grape varieties — Sauvignac, Floréal, Vidoc Noir, Voltis, Souvignier Gris, and others — for use in Bordeaux AOC wines. The approval is deliberately limited: hybrids are capped at 5% of any producer's vineyard area and 10% of any finished blend, classified as "accessory" grapes that cannot appear on the label.
 
-The region is adapting — experimenting with later-ripening varieties, canopy management to reduce sun exposure, and, most controversially, permitting PIWI hybrids — but the question of what Bordeaux tastes like in a 2°C-warmer world remains unanswered.
+## The Pressure
+
+Bordeaux's traditional varieties — Merlot, Cabernet Sauvignon, Cabernet Franc — are under increasing disease pressure from warmer, wetter growing seasons. Average temperatures have risen 0.9–1.2°C since pre-industrial levels. Harvest dates are two to three weeks earlier than in 1980. The three major fungal diseases — downy mildew, powdery mildew, and botrytis bunch rot — require more fungicide applications each year.
+
+The PIWI hybrids reduce fungicide requirements by up to 60–80% compared to traditional varieties in high-pressure seasons. They were selected specifically for resistance to all three of Bordeaux's major fungal threats.
+
+## The Signal
+
+The 5% cap is a rounding error in volume terms. Its significance is symbolic: Bordeaux, the citadel of tradition, has acknowledged that the climate for which its AOC was drawn no longer exists. The approval is explicitly experimental and can be raised, lowered, or revoked based on evidence.
+
+The question is whether 5% is enough to make a difference — and whether the cap will be raised if disease pressure continues to increase.

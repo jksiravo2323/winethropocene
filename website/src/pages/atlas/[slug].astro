@@ -1,33 +1,32 @@
 ---
+export const prerender = true;
+import { getCollection, render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { getCollection } from "astro:content";
-import type { AtlasEntry } from "../../lib/atlas";
+import PointCloudBackdrop from "../../components/PointCloudBackdrop.astro";
+import AtlasEntry from "../../components/AtlasEntry.astro";
+import { loadAtlas, cloudForCategory } from "../../lib/atlas";
 
-const all = await getCollection("atlas");
-const bySlug = new Map<string, AtlasEntry>();
-for (const e of all) bySlug.set(e.slug, e);
+export async function getStaticPaths() {
+  const entries = await getCollection("atlas");
+  return entries.map((e) => ({ params: { slug: e.id } }));
+}
 
 const { slug } = Astro.params;
-const entry = bySlug.get(slug!);
+const { bySlug } = await loadAtlas();
+const entry = bySlug.get(slug ?? "");
 if (!entry) return Astro.redirect("/404");
+
+const cloud = cloudForCategory(entry.data.category);
 ---
 
 <BaseLayout
   title={`${entry.data.title} — Winethropocene Atlas`}
-  description={entry.data.summary}
+  description={entry.data.summary ?? entry.data.subtitle}
+  active="/atlas"
 >
+  <PointCloudBackdrop ply={cloud} />
   <section class="container container--wide" style="padding-top: clamp(2rem, 4vw, 3rem);">
-    <a class="eyebrow" href="/atlas" style="margin-bottom: 1.5rem;">&larr; Back to Atlas</a>
+    <a class="eyebrow" href="/atlas" style="margin-bottom: 1.5rem;">← Back to Atlas</a>
     <AtlasEntry entry={entry} bySlug={bySlug} headingLevel={1} />
   </section>
 </BaseLayout>
-
-<style>
-.eyebrow {
-  display: inline-block;
-  font-size: 0.78rem;
-  color: var(--text-dim);
-  letter-spacing: 0.04em;
-}
-.eyebrow:hover { color: var(--text); text-decoration: none; }
-</style>

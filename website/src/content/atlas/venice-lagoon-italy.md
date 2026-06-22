@@ -1,31 +1,41 @@
 ---
 title: "Venice Lagoon, Italy"
-place: "Veneto, Italy"
+place: "Venice, Italy"
 country: "Italy"
-lat: 45.5
-lon: 12.3
+lat: 45.45
+lon: 12.35
 category: "region"
-subcategory: "coastal"
-summary: "The vineyards of the Venice Lagoon — from the islands of Sant'Erasmo and Mazzorbo to the reclaimed delta of the Piave — produce some of Italy's most distinctive wines. Rising sea levels, saltwater intrusion, and increasingly frequent acqua alta events threaten vineyards that sit at or below sea level."
-subtitle: "Vineyards below the waterline"
+subcategory: "urban"
+summary: "Urban heritage viticulture in the Venice Lagoon — vineyards on islands, ancient varieties, and the question of whether wine production can survive rising sea levels and increasing salinity."
+subtitle: "Vines among the canals"
 status: "at-risk"
 climateZone: "mediterranean"
-varieties: ["Dorona", "Glera", "Raboso", "Verduzzo"]
-elevation: "0–10m"
-primaryThreat: "sea-level-rise"
-period: "Roman era–present"
-tags: ["venice", "veneto", "lagoon", "sea-level-rise", "saltwater-intrusion", "italy", "dorona"]
-confidence: "green"
-related: ["southern-europe-aridity", "champagne-france"]
+varieties: ["Dorona", "Glera", "Malvasia", "Verduzzo"]
+elevation: "0–5m"
+primaryThreat: "water-scarcity"
+period: "Medieval–present"
+tags: ["venice", "italy", "urban-viticulture", "sea-level-rise", "heritage", "lagoon"]
+confidence: "amber"
+related: []
 references:
-  - { label: "Bisaglia, Lagoon Viticulture Study, 2024", kind: "primary" }
-  - { label: "IPCC, Sea Level Rise Projections, 2023", url: "https://www.ipcc.ch", kind: "primary" }
+  - { label: "Venissa / Bisol, Dorona restoration project", kind: "primary" }
+  - { label: "IPCC, Sea-level rise projections for the Mediterranean, 2023", kind: "primary" }
 ---
 
 ## Overview
 
-The vineyards of the Venice Lagoon produce some of Italy's most distinctive wines — from the island vineyards of Sant'Erasmo and Mazzorbo to the reclaimed delta of the Piave River. These are vineyards that sit at or below sea level, protected by drainage systems that have operated for centuries.
+The Venice Lagoon is one of the world's most improbable wine regions. Vineyards occupy small islands — Mazzorbo, Sant'Erasmo, the lagoon's scattered *barene* — where grapevines grow in salt-affected soils, exposed to the same acqua alta that threatens Venice itself.
 
-Now, rising sea levels — roughly 3mm/year in the northern Adriatic, accelerating — are challenging those drainage systems. Saltwater intrusion is increasing soil salinity. And the frequency of acqua alta events that flood the lagoon is increasing.
+The region's signature grape is Dorona, an ancient white variety that was nearly extinct until the Bisol family's Venissa project began restoring it in the early 2000s. The resulting wines are produced in tiny quantities — a few thousand bottles per year — and are among the most distinctive in Italy: saline, structured whites that taste of the lagoon.
 
-The Dorona grape, native to the lagoon islands and nearly extinct by the 1990s, has been revived by a small group of producers. Its survival is a symbol of what is at stake: not just wine, but a cultural landscape that has produced it for two thousand years.
+## The Threat
+
+Sea-level rise is the existential threat. IPCC projections for the Mediterranean show 30–60 cm of rise by 2100 under current emissions scenarios, with storm surge events becoming more frequent. The lagoon's vineyards sit at or near sea level. Increased salinity in soil and groundwater is already affecting vine health and fruit character.
+
+The MOSE flood barrier system, operational since 2020, protects Venice from extreme acqua alta events but raises the water table in the lagoon when closed for extended periods — potentially worsening soil salinity for the vineyards.
+
+## What's at Stake
+
+The Venice Lagoon produces a tiny fraction of Italy's wine. Its significance is cultural, not commercial: it represents a form of viticulture — urban, heritage, small-scale — that has few parallels anywhere in the world.
+
+The question is whether it can survive in a lagoon that is itself under existential threat. If the answer is no, the loss is not measured in hectolitres. It is measured in the disappearance of a living link between wine and one of the world's most extraordinary cities.

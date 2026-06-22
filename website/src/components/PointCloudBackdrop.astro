@@ -1,9 +1,219 @@
 ---
-// PointCloudBackdrop.astro — three.js rotating point cloud
+// Full-viewport rotating point cloud behind page content.
+// Decorative only — no controls, no zoom, no pan.
+export interface Props {
+  /** Path to .ply under public/, e.g. "/clouds/bench.ply" */
+  ply: string;
+  /** Optional preset override; defaults to "ghost". */
+  preset?: "ghost" | "dust" | "ember" | "paper";
+  /** Primary = large/dominant, accent = small/secondary. */
+  size?: "primary" | "accent";
+  /** Viewport corner the cloud anchors to. */
+  corner?: "br" | "bl" | "tr" | "tl";
+  /** When true (default), pick a random cloud from the shared pool on each
+   *  page load instead of always rendering `ply`. `ply` stays the SSR default. */
+  randomize?: boolean;
+}
+const {
+  ply,
+  preset = "ghost",
+  size = "primary",
+  corner = "br",
+  randomize = true,
+} = Astro.props;
+const cls = `ptcloud-backdrop ptcloud-backdrop--${size} ptcloud-backdrop--${corner}`;
+
+// Decorative object clouds eligible for the per-load rotation on the general
+// site pages. Excludes globe.ply (the atlas map globe) and the category-only
+// objects door.ply (housing) + auditorium-seats.ply (education), which are
+// reserved for atlas entry pages. hospital-bed stays in the rotation.
+const CLOUD_POOL = [
+  "/clouds/wine-bottle.ply",
+  "/clouds/grape-cluster.ply",
+  "/clouds/vine-tendril.ply",
+  "/clouds/wine-glass.ply",
+  "/clouds/terroir-stone.ply",
+  "/clouds/barrel.ply",
+  "/clouds/globe.ply",
+  "/clouds/grape-cluster.ply",
+];
 ---
 
-<div id="point-cloud-backdrop" class="point-cloud-backdrop"></div>
+<div class={cls} aria-hidden="true">
+  <div class="ptcloud-backdrop__stage">
+    <canvas
+      class="ptcloud-backdrop__canvas"
+      data-ply={ply}
+      data-preset={preset}
+      data-pool={randomize ? JSON.stringify(CLOUD_POOL) : null}
+    ></canvas>
+  </div>
+</div>
+
+<script>
+  import { createAtlasRenderer } from "../lib/atlas-renderer/index.js";
+  import { POINTS_PRESETS } from "../lib/atlas-renderer/presets.js";
+
+  const canvases = document.querySelectorAll<HTMLCanvasElement>(
+    "canvas.ptcloud-backdrop__canvas",
+  );
+
+  for (const canvas of canvases) {
+    let ply = canvas.dataset.ply;
+    // Rotate the floating object on each load: pick a random cloud from the
+    // shared pool, falling back to the page's hardcoded `ply`.
+    const poolRaw = canvas.dataset.pool;
+    if (poolRaw) {
+      try {
+        const pool = JSON.parse(poolRaw) as string[];
+        if (Array.isArray(pool) && pool.length) {
+          ply = pool[Math.floor(Math.random() * pool.length)];
+        }
+      } catch {
+        /* keep the default ply */
+      }
+    }
+    const preset = (canvas.dataset.preset as
+      | "ghost"
+      | "dust"
+      | "ember"
+      | "paper") || "ghost";
+    if (!ply) continue;
+
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    try {
+      const renderer = createAtlasRenderer({
+        canvas,
+        mode: "points",
+        plyUrl: ply,
+        pointsPreset: preset,
+        controls: false,
+        points: {
+          bg: "#000000",
+          rot: reduced ? 0 : 0.18,
+        },
+      });
+
+      /* Assemble / dissolve — tie the cloud's density to scroll progress.
+         Near the top the object is airy (sparse dust); as you scroll down it
+         fills in toward the preset's full count. The count is eased toward its
+         target each frame so fast scrolls resolve smoothly rather than snap.
+         Because the PLY points are pre-shuffled, thinning the draw range reads
+         as a uniform dissolve across the whole form. Skipped under
+         reduced-motion (the cloud just renders at full density). */
+      if (!reduced) {
+        const full = POINTS_PRESETS[preset]?.count ?? 40000;
+        const MIN = Math.round(full * 0.45); // most-dissolved state (page top)
+        let cur = full;
+        let target = full;
+        let rafId = 0;
+
+        const computeTarget = () => {
+          const doc = document.documentElement;
+          const max = doc.scrollHeight - doc.clientHeight;
+          // Non-scrolling pages show the complete object.
+          const p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 1;
+          target = MIN + (full - MIN) * p;
+        };
+
+        const step = () => {
+          cur += (target - cur) * 0.08;
+          if (Math.abs(target - cur) < 0.75) cur = target;
+          if (renderer.points.isLoaded()) {
+            renderer.points.setCount(Math.round(cur));
+          }
+          rafId = cur === target ? 0 : requestAnimationFrame(step);
+        };
+
+        const kick = () => {
+          computeTarget();
+          if (!rafId) rafId = requestAnimationFrame(step);
+        };
+
+        // Apply the initial (scroll-position-correct) density once the cloud
+        // has loaded, with no entrance animation, then react to scroll.
+        const start = () => {
+          if (!renderer.points.isLoaded()) {
+            requestAnimationFrame(start);
+            return;
+          }
+          computeTarget();
+          cur = target;
+          renderer.points.setCount(Math.round(cur));
+          window.addEventListener("scroll", kick, { passive: true });
+          window.addEventListener("resize", kick);
+        };
+        start();
+      }
+    } catch (err) {
+      console.warn("[PointCloudBackdrop] failed to start", err);
+    }
+  }
+</script>
 
 <style>
-.point-cloud-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0.3; pointer-events: none; }
+  .ptcloud-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .ptcloud-backdrop--primary {
+    background:
+      radial-gradient(
+        ellipse at var(--vignette-x, 78%) var(--vignette-y, 72%),
+        rgba(0, 0, 0, 0.35) 0%,
+        rgba(0, 0, 0, 0.82) 48%,
+        rgba(0, 0, 0, 0.97) 78%
+      );
+  }
+  .ptcloud-backdrop--accent {
+    background:
+      radial-gradient(
+        ellipse at var(--vignette-x, 80%) var(--vignette-y, 20%),
+        rgba(0, 0, 0, 0.7) 0%,
+        rgba(0, 0, 0, 0.88) 60%,
+        rgba(0, 0, 0, 0.95) 100%
+      );
+  }
+
+  .ptcloud-backdrop__stage {
+    position: absolute;
+    z-index: -1;
+  }
+  .ptcloud-backdrop--primary .ptcloud-backdrop__stage,
+  .ptcloud-backdrop--accent .ptcloud-backdrop__stage {
+    width: clamp(294px, 50.6vw, 810px);
+    height: clamp(294px, 50.6vw, 810px);
+    opacity: 0.32;          /* atmosphere behind copy, not noise over it (was 0.6) */
+  }
+
+  /* Corner anchors */
+  .ptcloud-backdrop--br .ptcloud-backdrop__stage { right: 0; bottom: 0; }
+  .ptcloud-backdrop--bl .ptcloud-backdrop__stage { left: 0; bottom: 0; }
+  .ptcloud-backdrop--tr .ptcloud-backdrop__stage { right: 0; top: 0; }
+  .ptcloud-backdrop--tl .ptcloud-backdrop__stage { left: 0; top: 0; }
+
+  /* Vignette focal point follows the cloud corner */
+  .ptcloud-backdrop--br { --vignette-x: 70%; --vignette-y: 70%; }
+  .ptcloud-backdrop--bl { --vignette-x: 30%; --vignette-y: 70%; }
+  .ptcloud-backdrop--tr { --vignette-x: 70%; --vignette-y: 30%; }
+  .ptcloud-backdrop--tl { --vignette-x: 30%; --vignette-y: 30%; }
+
+  .ptcloud-backdrop__canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  @media (max-width: 800px) {
+    .ptcloud-backdrop--primary .ptcloud-backdrop__stage,
+    .ptcloud-backdrop--accent .ptcloud-backdrop__stage {
+      width: 64.4vw;
+      height: 64.4vw;
+      opacity: 0.28;        /* keep it well behind copy on small screens */
+    }
+    .ptcloud-backdrop--br .ptcloud-backdrop__stage { right: -8vw; bottom: -4vw; }
+    .ptcloud-backdrop--bl .ptcloud-backdrop__stage { left: -8vw; bottom: -4vw; }
+  }
 </style>

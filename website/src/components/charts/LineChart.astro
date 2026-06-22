@@ -1,26 +1,163 @@
 ---
-// LineChart.astro — SVG line chart
-const { data, xKey, yKey, color, width, height } = Astro.props;
-const w = width || 600;
-const h = height || 300;
-const pad = 40;
-const xs = data.map((_, i) => pad + (i / (data.length - 1)) * (w - 2 * pad));
-const maxY = Math.max(...data.map(d => d[yKey]));
-const minY = Math.min(...data.map(d => d[yKey]));
-const range = maxY - minY || 1;
-const ys = data.map(d => pad + (1 - (d[yKey] - minY) / range) * (h - 2 * pad));
-const pathD = xs.map((x, i) => `${i === 0 ? "M" : "L"}${x},${ys[i]}`).join(" ");
+/**
+ * LineChart — bespoke SVG line/area chart for trends and projections. One or
+ * more series share an x-axis of categories. Lines draw on from left to right
+ * on scroll-enter (stroke-dash), the area fill fades up beneath. On-brand:
+ * accent stroke on black, faint gridlines, IBM Plex axis labels.
+ *
+ *   <LineChart
+ *     unit="%"
+ *     categories={["2025","2030","2035","2040","2045","2050"]}
+ *     series={[
+ *       { name: "SSP1-2.6 (low)", values: [0,6,12,17,21,25] },
+ *       { name: "SSP5-8.5 (high)", values: [0,8,16,23,29,34], accent: "#ff7af0", area: true },
+ *     ]}
+ *   />
+ */
+export interface Series {
+  name: string;
+  values: number[];
+  /** Per-series accent (hex). Defaults to the chart accent. */
+  accent?: string;
+  /** Draw a soft gradient area beneath this series. */
+  area?: boolean;
+}
+export interface Props {
+  categories: string[];
+  series: Series[];
+  unit?: string;
+  decimals?: number;
+  /** Force the axis maximum; defaults to max across series with 12% headroom. */
+  max?: number;
+  /** Force the axis minimum; defaults to min(0, data min). */
+  min?: number;
+  /** Show end-of-line dots + value labels (default true; off for dense charts). */
+  markers?: boolean;
+  /** Show the legend (defaults to true when there are multiple series). */
+  legend?: boolean;
+  caption?: string;
+  accent?: string;
+}
+const {
+  categories,
+  series,
+  unit = "",
+  decimals = 0,
+  max,
+  min,
+  markers = true,
+  legend,
+  caption,
+  accent,
+} = Astro.props;
+
+const W = 720;
+const H = 380;
+const padL = 46;
+const padR = 18;
+const padT = 22;
+const padB = 44;
+const plotW = W - padL - padR;
+const plotH = H - padT - padB;
+const baseline = padT + plotH;
+
+const allValues = series.flatMap((s) => s.values);
+const axisMax = (max ?? Math.max(...allValues, 0) * 1.12) || 1;
+const axisMin = min ?? Math.min(0, ...allValues);
+const span = axisMax - axisMin || 1;
+
+const cols = categories.length;
+const xAt = (i: number) =>
+  cols <= 1 ? padL + plotW / 2 : padL + (plotW * i) / (cols - 1);
+const yAt = (v: number) => baseline - ((v - axisMin) / span) * plotH;
+
+const fmt = (v: number) =>
+  v.toLocaleString("en-GB", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }) + unit;
+
+const built = series.map((s, si) => {
+  const pts = s.values.map((v, i) => ({ x: xAt(i), y: yAt(v) }));
+  const line = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
+  const area =
+    `M${pts[0].x.toFixed(1)} ${baseline} ` +
+    pts.map((p) => `L${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ") +
+    ` L${pts[pts.length - 1].x.toFixed(1)} ${baseline} Z`;
+  return { ...s, pts, line, area, si, end: pts[pts.length - 1] };
+});
+
+const grid = [0, 0.5, 1].map((f) => {
+  const value = axisMin + span * f;
+  return { y: yAt(value), v: fmt(value) };
+});
+const showMarkers = markers;
+const showLegend = legend ?? series.length > 1;
 ---
 
-<svg viewBox={`0 0 ${w} ${h}`} class="line-chart">
-  <path d={pathD} fill="none" stroke={color || "var(--accent)"} stroke-width="2" />
-  {data.map((d, i) => (
-    <circle cx={xs[i]} cy={ys[i]} r="3" fill={color || "var(--accent)"}>
-      <title>{d[xKey]}: {d[yKey]}</title>
-    </circle>
-  ))}
-</svg>
+<div class="chart chart--line" data-chart style={accent ? `--accent:${accent}` : undefined}>
+  <svg
+    viewBox={`0 0 ${W} ${H}`}
+    class="chart__svg"
+    role="img"
+    aria-label={caption ?? "Line chart"}
+    preserveAspectRatio="xMidYMid meet"
+  >
+    <defs>
+      {built.map((s) => (
+        <linearGradient id={`area-grad-${s.si}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color={s.accent ?? "var(--accent)"} stop-opacity="0.28" />
+          <stop offset="100%" stop-color={s.accent ?? "var(--accent)"} stop-opacity="0" />
+        </linearGradient>
+      ))}
+    </defs>
 
-<style>
-.line-chart { width: 100%; height: auto; }
-</style>
+    {grid.map((g) => (
+      <>
+        <line class="chart__grid" x1={padL} x2={W - padR} y1={g.y} y2={g.y} />
+        <text class="chart__grid-label" x={padL - 8} y={g.y + 4} text-anchor="end">{g.v}</text>
+      </>
+    ))}
+
+    {categories.map((c, i) => (
+      <text class="chart__cat" x={xAt(i)} y={H - padB + 24} text-anchor="middle">{c}</text>
+    ))}
+
+    {built.map((s) =>
+      s.area ? (
+        <path
+          class="chart__area"
+          d={s.area}
+          fill={`url(#area-grad-${s.si})`}
+          style={`--series:${s.accent ?? "var(--accent)"}`}
+        />
+      ) : null,
+    )}
+
+    {built.map((s) => (
+      <g style={`--series:${s.accent ?? "var(--accent)"}; --si:${s.si}`}>
+        <path class="chart__line" d={s.line} pathLength="1" />
+        {showMarkers && (
+          <>
+            <circle class="chart__dot" cx={s.end.x} cy={s.end.y} r="4.5" />
+            <text class="chart__endlabel" x={s.end.x - 8} y={s.end.y - 8} text-anchor="end">{fmt(s.values[s.values.length - 1])}</text>
+          </>
+        )}
+      </g>
+    ))}
+  </svg>
+
+  {showLegend && (
+    <ul class="chart__legend">
+      {built.map((s) => (
+        <li style={`--series:${s.accent ?? "var(--accent)"}`}>
+          <span class="chart__legend-swatch" aria-hidden="true"></span>{s.name}
+        </li>
+      ))}
+    </ul>
+  )}
+</div>
+
+<script>
+  import "../../scripts/chart-anim.js";
+</script>

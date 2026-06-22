@@ -1,26 +1,172 @@
 ---
-// Heatmap.astro — grid-based heatmap chart
-const { data, xLabels, yLabels, colorScale } = Astro.props;
+/**
+ * Heatmap — a grid of value-coloured cells with row/column labels and a colour
+ * legend. Cell colours are interpolated at build time (no client colour math);
+ * cells fade + scale in with a diagonal stagger on scroll-enter.
+ *
+ *   <Heatmap
+ *     yLabels={["1st","2nd","3rd","4th","5th"]}
+ *     xLabels={["Bread","Meat","Dairy","Sugar"]}
+ *     values={[[1.6,0.9,0.6,0.3],[1.2,0.8,0.5,0.3],...]}
+ *     unit="%" legendLabel="Share of household budget"
+ *   />
+ *
+ * scale="diverging" gives a low→mid→high ramp (good for wet/dry, +/- data);
+ * the default sequential ramp goes from a near-black base to the accent.
+ */
+export interface Props {
+  xLabels: string[];
+  yLabels: string[];
+  /** Row-major grid: values[row][col], aligned to yLabels × xLabels. */
+  values: number[][];
+  min?: number;
+  max?: number;
+  scale?: "sequential" | "diverging";
+  /** Ramp endpoints (concrete hex; the accent is a CSS var so can't interpolate). */
+  colorLow?: string;
+  colorMid?: string;
+  colorHigh?: string;
+  unit?: string;
+  decimals?: number;
+  /** Legend caption under the colour bar. */
+  legendLabel?: string;
+  /** Rotate the column labels (helps when there are many / long ones). */
+  rotateX?: boolean;
+  caption?: string;
+  accent?: string;
+}
+const {
+  xLabels,
+  yLabels,
+  values,
+  min,
+  max,
+  scale = "sequential",
+  colorLow = "#0e0f17",
+  colorMid = "#15151c",
+  colorHigh = "#FFB4F9",
+  unit = "",
+  decimals = 1,
+  legendLabel,
+  rotateX = false,
+  caption,
+  accent,
+} = Astro.props;
+
+const flat = values.flat();
+const lo = min ?? Math.min(...flat);
+const hi = max ?? Math.max(...flat);
+const range = hi - lo || 1;
+
+const hexToRgb = (h: string) => {
+  const s = h.replace("#", "");
+  return [0, 2, 4].map((i) => parseInt(s.slice(i, i + 2), 16));
+};
+const rgbToHex = (r: number, g: number, b: number) =>
+  "#" + [r, g, b].map((x) => Math.round(Math.max(0, Math.min(255, x))).toString(16).padStart(2, "0")).join("");
+const mix = (c1: string, c2: string, t: number) => {
+  const a = hexToRgb(c1);
+  const b = hexToRgb(c2);
+  return rgbToHex(a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t);
+};
+const colorAt = (t: number) => {
+  t = Math.max(0, Math.min(1, t));
+  if (scale === "diverging") {
+    return t < 0.5 ? mix(colorLow, colorMid, t * 2) : mix(colorMid, colorHigh, (t - 0.5) * 2);
+  }
+  return mix(colorLow, colorHigh, t);
+};
+
+const cols = xLabels.length;
+const rows = yLabels.length;
+
+// Geometry. Cells are 30px tall; when column labels sit horizontally (not
+// rotated) the cell WIDTH grows to fit the widest label so they never collide.
+const cellH = 30;
+const gap = 3;
+const colLabelPx = Math.ceil(Math.max(0, ...xLabels.map((l) => l.length * 6.6)));
+const cellW = rotateX ? cellH : Math.max(cellH, colLabelPx + 12);
+const padL = Math.min(190, Math.max(70, ...yLabels.map((l) => l.length * 7)));
+const padT = 8;
+const padB = rotateX ? Math.min(150, Math.max(40, ...xLabels.map((l) => l.length * 6))) : 34;
+const padR = 70; // legend
+const gridW = cols * (cellW + gap);
+const gridH = rows * (cellH + gap);
+const W = padL + gridW + padR;
+const H = padT + gridH + padB;
+
+const fmt = (v: number) =>
+  v.toLocaleString("en-GB", { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) + unit;
+
+type C = { x: number; y: number; fill: string; i: number };
+const cells: C[] = [];
+values.forEach((row, r) =>
+  row.forEach((v, c) => {
+    cells.push({
+      x: padL + c * (cellW + gap),
+      y: padT + r * (cellH + gap),
+      fill: colorAt((v - lo) / range),
+      i: r + c, // diagonal stagger
+    });
+  }),
+);
+
+// Legend gradient stops
+const legendStops = [0, 0.25, 0.5, 0.75, 1].map((t) => ({ t, color: colorAt(t) }));
+const legendX = padL + gridW + 22;
+const legendH = gridH;
 ---
 
-<div class="heatmap">
-  <div class="heatmap-grid" style={`grid-template-columns: auto repeat(${xLabels.length}, 1fr)`}>
-    <div></div>
-    {xLabels.map(l => <div class="heatmap-label">{l}</div>)}
-    {data.map((row, i) => (
-      <>
-        <div class="heatmap-label">{yLabels[i]}</div>
-        {row.map((val, j) => (
-          <div class="heatmap-cell" style={`background:${colorScale ? colorScale(val) : `rgba(var(--accent-rgb),${val})`}`}></div>
+<div class="chart chart--heatmap" data-chart style={`max-width:${W}px;${accent ? `--accent:${accent}` : ""}`}>
+  <svg
+    viewBox={`0 0 ${W} ${H}`}
+    class="chart__svg"
+    role="img"
+    aria-label={caption ?? "Heatmap"}
+    preserveAspectRatio="xMidYMid meet"
+  >
+    <defs>
+      <linearGradient id="hm-legend" x1="0" y1="1" x2="0" y2="0">
+        {legendStops.map((s) => (
+          <stop offset={`${s.t * 100}%`} stop-color={s.color} />
         ))}
-      </>
+      </linearGradient>
+    </defs>
+
+    {cells.map((c) => (
+      <rect
+        class="chart__cell"
+        x={c.x}
+        y={c.y}
+        width={cellW}
+        height={cellH}
+        rx="2"
+        style={`fill:${c.fill}; --i:${c.i}`}
+      />
     ))}
-  </div>
+
+    {yLabels.map((l, r) => (
+      <text class="chart__cat" x={padL - 8} y={padT + r * (cellH + gap) + cellH / 2 + 4} text-anchor="end">{l}</text>
+    ))}
+
+    {xLabels.map((l, c) => {
+      const cx = padL + c * (cellW + gap) + cellW / 2;
+      const cy = padT + gridH + 14;
+      return rotateX ? (
+        <text class="chart__cat chart__cat--sm" x={cx} y={cy} text-anchor="end" transform={`rotate(-45 ${cx} ${cy})`}>{l}</text>
+      ) : (
+        <text class="chart__cat chart__cat--sm" x={cx} y={cy} text-anchor="middle">{l}</text>
+      );
+    })}
+
+    {/* Colour legend */}
+    <rect x={legendX} y={padT} width="12" height={legendH} rx="2" fill="url(#hm-legend)" />
+    <text class="chart__grid-label" x={legendX + 18} y={padT + 10}>{fmt(hi)}</text>
+    <text class="chart__grid-label" x={legendX + 18} y={padT + legendH}>{fmt(lo)}</text>
+  </svg>
+  {legendLabel && <p class="chart__legend-caption">{legendLabel}</p>}
 </div>
 
-<style>
-.heatmap { overflow-x: auto; }
-.heatmap-grid { display: grid; gap: 2px; }
-.heatmap-label { font-size: 0.7rem; color: var(--text-dim); padding: 0.25rem; }
-.heatmap-cell { aspect-ratio: 1; min-width: 30px; border-radius: 2px; }
-</style>
+<script>
+  import "../../scripts/chart-anim.js";
+</script>

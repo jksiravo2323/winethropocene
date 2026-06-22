@@ -1,6 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
   <rect width="1200" height="630" fill="#0D0D0D"/>
   <rect x="0" y="0" width="1200" height="4" fill="#8B2252"/>
-  <text x="600" y="280" text-anchor="middle" font-family="Georgia,serif" font-size="48" font-weight="300" fill="#F5F0EB" letter-spacing="8">WINETHROPOCENE</text>
-  <text x="600" y="350" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-size="20" fill="rgba(245,240,235,0.5)">Wine, Climate &amp; Adaptation</text>
+  <!-- Wordmark: W I N E / THROPOCENE -->
+  <g transform="translate(80, 180)">
+    <text font-family="Georgia,serif" font-size="120" font-weight="300" letter-spacing="-3" fill="#F5F0EB">
+      <tspan x="0" fill="#8B2252">W</tspan><tspan fill="#F5F0EB">I</tspan><tspan fill="#8B2252">N</tspan><tspan fill="#F5F0EB">E</tspan>
+    </text>
+    <text x="12" y="100" font-family="Georgia,serif" font-size="42" font-weight="300" letter-spacing="10" fill="#C4743E">THROPOCENE</text>
+  </g>
+  <!-- Tagline -->
+  <text x="80" y="480" font-family="IBM Plex Sans,sans-serif" font-size="28" fill="rgba(245,240,235,0.62)">Wine, climate, and adaptation.</text>
+  <!-- URL -->
+  <text x="80" y="540" font-family="IBM Plex Sans,sans-serif" font-size="20" letter-spacing="2" fill="#8B2252">WINETHROPOCENE.COM</text>
 </svg>

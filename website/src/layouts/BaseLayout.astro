@@ -1,159 +1,271 @@
 ---
-import PointCloudBackdrop from "../components/PointCloudBackdrop.astro";
+import "../styles/site.css";
 
-const { title, description } = Astro.props;
-const pageTitle = title ? `${title} — Winethropocene` : "Winethropocene — Wine, Climate & Adaptation";
+export interface Props {
+  title: string;
+  description?: string;
+  /** Pathname of the current page, e.g. "/articles" */
+  active?: string;
+}
+
+const {
+  title,
+  description = "Winethropocene — wine, climate, and adaptation. An editorial project documenting the transformation of the global wine industry in the age of ecological disruption.",
+  active = "",
+} = Astro.props;
+
+const nav = [
+  { href: "/articles", label: "Articles" },
+  { href: "/atlas", label: "Atlas" },
+  { href: "/producers", label: "Producers" },
+  { href: "/media", label: "Media" },
+  { href: "/about", label: "About" },
+  { href: "/contact", label: "Contact" },
+];
+
+const isActive = (href: string) => active === href;
 ---
 
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{pageTitle}</title>
-    <meta name="description" content={description || "An online magazine about wine, climate change, and adaptation."} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
     <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg" />
-    <meta property="og:title" content={pageTitle} />
-    <meta property="og:description" content={description || "Wine, Climate & Adaptation"} />
-    <meta property="og:image" content="/assets/og-image.svg" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={`https://winethropocene.com${Astro.url.pathname}`} />
+    <meta property="og:image" content="https://winethropocene.com/assets/og-image.svg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta name="twitter:image" content="/assets/og-image.svg" />
+    <meta name="twitter:image" content="https://winethropocene.com/assets/og-image.svg" />
     <meta name="twitter:card" content="summary_large_image" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital@0;1&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Libre+Baskerville:ital@0;1&display=swap" rel="stylesheet" />
   </head>
   <body>
-    <PointCloudBackdrop />
-    <a href="#main-content" class="skip-link">Skip to content</a>
-    <header class="site-header" id="site-header">
-      <nav class="site-nav" aria-label="Main">
-        <a href="/" class="site-nav__brand" aria-label="Winethropocene home">
-          <span class="site-nav__wordmark">WINE<span class="site-nav__thro">THROPOCENE</span></span>
-        </a>
-        <ul class="site-nav__links">
-          <li><a href="/articles/">Articles</a></li>
-          <li><a href="/atlas/">Atlas</a></li>
-          <li><a href="/producers/">Producers</a></li>
-          <li><a href="/about/">About</a></li>
-        </ul>
-      </nav>
-      <div class="site-header__progress" aria-hidden="true"><div class="site-header__progress-bar" id="progress-bar"></div></div>
+    <div class="scroll-progress" aria-hidden="true"></div>
+    <header class="site-header">
+      <div class="site-header__inner">
+        <div class="site-brand">
+          <a class="site-logo" href="/" aria-label="Winethropocene — home">
+            <span class="site-logo__wordmark">Winethropocene</span>
+          </a>
+        </div>
+        <button
+          type="button"
+          class="site-nav__toggle"
+          aria-expanded="false"
+          aria-controls="site-nav"
+          aria-label="Open menu"
+        >
+          <span class="site-nav__toggle-bar" aria-hidden="true"></span>
+          <span class="site-nav__toggle-bar" aria-hidden="true"></span>
+          <span class="site-nav__toggle-bar" aria-hidden="true"></span>
+        </button>
+        <nav class="site-nav" id="site-nav" aria-label="Primary">
+          <ul>
+            {
+              nav.map((item) => (
+                <li>
+                  <a
+                    href={item.href}
+                    aria-current={isActive(item.href) ? "page" : undefined}
+                  >
+                    {item.label}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </nav>
+        <span class="site-header__spacer" aria-hidden="true"></span>
+      </div>
     </header>
-    <main id="main-content">
+    <script is:inline>
+      (function () {
+        const toggle = document.querySelector(".site-nav__toggle");
+        const nav = document.getElementById("site-nav");
+        if (!toggle || !nav) return;
+        let savedScrollY = 0;
+        const close = () => {
+          toggle.setAttribute("aria-expanded", "false");
+          toggle.setAttribute("aria-label", "Open menu");
+          document.body.classList.remove("nav-open");
+          const b = document.body.style;
+          b.position = "";
+          b.top = "";
+          b.left = "";
+          b.right = "";
+          b.width = "";
+          window.scrollTo(0, savedScrollY);
+        };
+        const open = () => {
+          savedScrollY = window.scrollY;
+          toggle.setAttribute("aria-expanded", "true");
+          toggle.setAttribute("aria-label", "Close menu");
+          document.body.classList.add("nav-open");
+          const b = document.body.style;
+          b.position = "fixed";
+          b.top = "-" + savedScrollY + "px";
+          b.left = "0";
+          b.right = "0";
+          b.width = "100%";
+        };
+        toggle.addEventListener("click", () => {
+          toggle.getAttribute("aria-expanded") === "true" ? close() : open();
+        });
+        nav.addEventListener("click", (e) => {
+          if (e.target instanceof HTMLAnchorElement) close();
+        });
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") close();
+        });
+      })();
+    </script>
+
+    <main>
       <slot />
     </main>
+
     <footer class="site-footer">
-      <div class="site-footer__inner container">
-        <div class="site-footer__brand">
-          <span class="site-footer__wordmark">WINETHROPOCENE</span>
-          <p class="site-footer__tagline">Wine, Climate & Adaptation</p>
+      <div class="site-footer__inner">
+        <a
+          class="site-footer__mark"
+          href="/"
+          aria-label="Winethropocene"
+        >
+          <span class="site-footer__wordmark">W</span>
+        </a>
+        <div class="site-footer__main">
+          <div class="site-footer__copy">
+            © <span id="year">2026</span> Winethropocene — Wine, climate, and adaptation.
+          </div>
+          <div class="site-footer__links">
+            {nav.map((item) => <a href={item.href}>{item.label}</a>)}
+          </div>
         </div>
-        <nav class="site-footer__nav" aria-label="Footer">
-          <div class="site-footer__col">
-            <h4 class="site-footer__heading">Content</h4>
-            <ul>
-              <li><a href="/articles/">Articles</a></li>
-              <li><a href="/atlas/">Atlas</a></li>
-              <li><a href="/producers/">Producers</a></li>
-            </ul>
-          </div>
-          <div class="site-footer__col">
-            <h4 class="site-footer__heading">About</h4>
-            <ul>
-              <li><a href="/about/">About</a></li>
-              <li><a href="/contact/">Contact</a></li>
-              <li><a href="/media/">Media</a></li>
-            </ul>
-          </div>
-        </nav>
-      </div>
-      <div class="site-footer__bottom">
-        <p>&copy; {new Date().getFullYear()} Winethropocene</p>
       </div>
     </footer>
+    <script>
+      const el = document.getElementById("year");
+      if (el) el.textContent = String(new Date().getFullYear());
+    </script>
+    <script is:inline>
+      /* Floater parallax */
+      (function () {
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+        const els = document.querySelectorAll("[data-parallax]");
+        if (!els.length) return;
+        function update() {
+          const vh = window.innerHeight;
+          for (const el of els) {
+            const speed = parseFloat(el.getAttribute("data-parallax")) || 0.18;
+            const rect = el.getBoundingClientRect();
+            const center = rect.top + rect.height / 2;
+            const offset = (vh / 2 - center) * speed;
+            el.style.transform = "translate3d(0, " + offset.toFixed(1) + "px, 0)";
+          }
+        }
+        let ticking = false;
+        function onScroll() {
+          if (!ticking) {
+            window.requestAnimationFrame(() => {
+              update();
+              ticking = false;
+            });
+            ticking = true;
+          }
+        }
+        window.addEventListener("scroll", onScroll, { passive: true });
+        window.addEventListener("resize", update);
+        update();
+      })();
+    </script>
+    <script is:inline>
+      (function () {
+        const header = document.querySelector(".site-header");
+        if (!header) return;
+        const root = document.documentElement;
+        function measure() {
+          root.style.setProperty("--header-h", header.offsetHeight + "px");
+        }
+        measure();
+        window.addEventListener("resize", measure);
+        if ("ResizeObserver" in window) {
+          new ResizeObserver(measure).observe(header);
+        }
+      })();
+    </script>
+    <script is:inline>
+      (function () {
+        const bar = document.querySelector(".scroll-progress");
+        if (!bar) return;
+        let ticking = false;
+        function update() {
+          const doc = document.documentElement;
+          const max = doc.scrollHeight - doc.clientHeight;
+          const p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+          bar.style.transform = "scaleX(" + p.toFixed(4) + ")";
+        }
+        function onScroll() {
+          if (!ticking) {
+            window.requestAnimationFrame(() => {
+              update();
+              ticking = false;
+            });
+            ticking = true;
+          }
+        }
+        window.addEventListener("scroll", onScroll, { passive: true });
+        window.addEventListener("resize", onScroll);
+        update();
+      })();
+    </script>
+    <script is:inline>
+      (function () {
+        const els = document.querySelectorAll("[data-reveal]");
+        if (!els.length) return;
+        const prefersReduced = window.matchMedia(
+          "(prefers-reduced-motion: reduce)",
+        ).matches;
+        if (!("IntersectionObserver" in window) || prefersReduced) return;
+        els.forEach((el) => el.classList.add("js-reveal"));
+        const io = new IntersectionObserver(
+          (entries) => {
+            for (const e of entries) {
+              if (e.isIntersecting) {
+                e.target.classList.add("is-in");
+                io.unobserve(e.target);
+              }
+            }
+          },
+          { rootMargin: "0px 0px -10% 0px", threshold: 0.12 },
+        );
+        els.forEach((el) => io.observe(el));
+      })();
+    </script>
   </body>
 </html>
 
-<style is:global>
-:root {
-  --bg: #0B0B0B;
-  --bg-card: #111111;
-  --bg-card-hover: #181818;
-  --text: #EBE7E0;
-  --text-dim: rgba(235, 231, 224, 0.55);
-  --text-faint: rgba(235, 231, 224, 0.28);
-  --border: rgba(235, 231, 224, 0.08);
-  --border-hover: rgba(235, 231, 224, 0.14);
-  --accent: #8B2252;
-  --accent-secondary: #C4743E;
-  --accent-tertiary: #5B9BD5;
-  --chart-blue: #5B9BD5;
-  --chart-amber: #E8875B;
-  --chart-green: #6A9A6A;
-  --chart-red: #C84B4B;
-  --chart-purple: #9B7BB8;
-}
-
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-html {
-  background: var(--bg);
-  color: var(--text);
-  font-family: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
-  font-size: 16px;
-  line-height: 1.6;
-  scroll-behavior: smooth;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-body { min-height: 100vh; display: flex; flex-direction: column; }
-
-main { flex: 1; position: relative; z-index: 1; }
-
-a { color: var(--accent); text-decoration: none; transition: color 0.2s; }
-a:hover { color: var(--accent-secondary); }
-
-h1, h2, h3, h4 { font-weight: 300; line-height: 1.25; }
-
-img { max-width: 100%; height: auto; }
-
-.skip-link { position: absolute; top: -100%; left: 1rem; z-index: 9999; padding: 0.5rem 1rem; background: var(--accent); color: #fff; border-radius: 0 0 4px 4px; font-size: 0.8rem; }
-.skip-link:focus { top: 0; }
-
-.site-header { position: sticky; top: 0; z-index: 100; background: rgba(11,11,11,0.82); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid var(--border); }
-.site-nav { max-width: 1280px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1.5rem; }
-.site-nav__brand { font-family: "Libre Baskerville", Georgia, serif; font-size: 1rem; color: var(--text); letter-spacing: 0.04em; }
-.site-nav__brand:hover { color: var(--accent-secondary); text-decoration: none; }
-.site-nav__wordmark { display: inline-flex; align-items: baseline; gap: 0.15em; }
-.site-nav__thro { font-size: 0.62em; letter-spacing: 0.22em; opacity: 0.5; font-family: "DM Mono", "IBM Plex Sans", monospace; }
-.site-nav__links { display: flex; gap: 1.5rem; list-style: none; }
-.site-nav__links a { color: var(--text-dim); font-size: 0.82rem; letter-spacing: 0.02em; }
-.site-nav__links a:hover { color: var(--text); text-decoration: none; }
-.site-header__progress { height: 2px; background: transparent; }
-.site-header__progress-bar { height: 100%; width: 0%; background: var(--accent); transition: width 0.1s linear; }
-
-.site-footer { border-top: 1px solid var(--border); margin-top: 4rem; padding: 3rem 1.5rem 1.5rem; }
-.site-footer__inner { max-width: 1280px; margin: 0 auto; display: flex; justify-content: space-between; gap: 3rem; flex-wrap: wrap; }
-.site-footer__wordmark { font-family: "Libre Baskerville", Georgia, serif; font-size: 1rem; letter-spacing: 0.08em; }
-.site-footer__tagline { font-size: 0.78rem; color: var(--text-dim); margin-top: 0.25rem; }
-.site-footer__nav { display: flex; gap: 3rem; }
-.site-footer__heading { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); margin-bottom: 0.75rem; }
-.site-footer__col ul { list-style: none; display: flex; flex-direction: column; gap: 0.4rem; }
-.site-footer__col a { font-size: 0.82rem; color: var(--text-dim); }
-.site-footer__col a:hover { color: var(--text); text-decoration: none; }
-.site-footer__bottom { max-width: 1280px; margin: 2rem auto 0; padding-top: 1rem; border-top: 1px solid var(--border); }
-.site-footer__bottom p { font-size: 0.7rem; color: var(--text-faint); }
-
-.container { max-width: 1280px; margin: 0 auto; padding: 0 1.5rem; }
-.container--wide { max-width: 1440px; }
-
-@media (max-width: 768px) {
-  .site-nav { flex-direction: column; gap: 0.5rem; padding: 0.75rem 1rem; }
-  .site-nav__links { gap: 1rem; }
-  .site-footer__inner { flex-direction: column; gap: 2rem; }
-  .site-footer__nav { gap: 2rem; }
-}
+<style>
+  /* Footer wordmark — a single large W */
+  .site-footer__mark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background: none;
+    text-decoration: none;
+  }
+  .site-footer__wordmark {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 300;
+    color: var(--pink);
+    letter-spacing: var(--ls-display);
+    line-height: 1;
+  }
 </style>

@@ -1,16 +1,71 @@
 ---
-// ReportArticle.astro — layout for report-style articles (publications legacy)
+import { render } from "astro:content";
+import type { CollectionEntry } from "astro:content";
+
+/**
+ * ReportArticle — the standard frame for an interactive online report. Renders
+ * the report hero (eyebrow, title, subtitle, byline, optional hero image), the
+ * MDX body (prose + inline chart components), a references list, and a "download
+ * the PDF" CTA. The streamlined counterpart to AtlasEntry.astro for the
+ * `publications` collection. See .claude/skills/interactive-report.
+ */
+export interface Props {
+  entry: CollectionEntry<"publications">;
+}
+const { entry } = Astro.props;
+const d = entry.data;
+const { Content } = await render(entry);
+
+const accent = d.accent ?? "var(--pink)";
+const dateLabel = d.date
+  ? d.date.toLocaleDateString("en-GB", { month: "long", year: "numeric" })
+  : d.year;
 ---
 
-<article class="report-article">
-  <div class="report-body">
-    <slot />
-  </div>
-</article>
+<article class="report" style={`--accent:${accent}`}>
+  <header class="report__head">
+    <p class="report__eyebrow">UBS Hub · Report</p>
+    <h1 class="report__title">{d.title}</h1>
+    {d.subtitle && <p class="report__subtitle">{d.subtitle}</p>}
+    <div class="report__byline">
+      {d.authors.length > 0 && (
+        <span class="report__authors">{d.authors.join(", ")}</span>
+      )}
+      <span class="report__date">{dateLabel}</span>
+    </div>
+  </header>
 
-<style>
-.report-article { max-width: 720px; margin: 0 auto; }
-.report-body { line-height: 1.7; font-size: 1.05rem; }
-.report-body :global(h2) { font-family: Georgia, serif; font-size: 1.5rem; margin: 2rem 0 0.75rem; }
-.report-body :global(h3) { font-size: 1.15rem; margin: 1.5rem 0 0.5rem; }
-</style>
+  {d.heroImage && (
+    <figure class="report__hero">
+      <img src={d.heroImage} alt="" loading="eager" />
+      {d.heroCredit && <figcaption class="report__hero-credit">{d.heroCredit}</figcaption>}
+    </figure>
+  )}
+
+  {d.summary && <p class="report__lead lead">{d.summary}</p>}
+
+  <div class="report__body atlas-entry__article">
+    <Content />
+  </div>
+
+  {d.references.length > 0 && (
+    <section class="report__refs atlas-entry__refs" aria-label="References">
+      <h2 class="atlas-entry__refs-head">References</h2>
+      <ol class="atlas-entry__refs-list">
+        {d.references.map((r) => (
+          <li>{r.url ? <a href={r.url} rel="noopener">{r.label}</a> : r.label}</li>
+        ))}
+      </ol>
+    </section>
+  )}
+
+  {d.pdfUrl && (
+    <aside class="report__download">
+      <div>
+        <span class="report__download-label">Prefer the printed version?</span>
+        <p class="report__download-sub">The full report is available as a formatted PDF.</p>
+      </div>
+      <a class="btn" href={d.pdfUrl} download>Download PDF</a>
+    </aside>
+  )}
+</article>
