@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#0D0D0D"/>
+  <rect x="0" y="0" width="1200" height="4" fill="#8B2252"/>
+  <text x="600" y="280" text-anchor="middle" font-family="Georgia,serif" font-size="48" font-weight="300" fill="#F5F0EB" letter-spacing="8">WINETHROPOCENE</text>
+  <text x="600" y="350" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-size="20" fill="rgba(245,240,235,0.5)">Wine, Climate &amp; Adaptation</text>
+</svg>

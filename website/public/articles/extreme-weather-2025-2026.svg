@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0D0D0D"/><stop offset="40%" stop-color="#1A1210"/><stop offset="100%" stop-color="#1F1510"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#sky)"/>
+  <rect x="0" y="0" width="1200" height="4" fill="#E8875B"/>
+  <text x="640" y="160" font-family="Georgia,serif" font-size="44" font-weight="300" fill="#F5F0EB"><tspan x="640" dy="0">One Vintage, Four Disasters</tspan></text>
+  <line x1="640" y1="195" x2="940" y2="195" stroke="#E8875B" stroke-opacity="0.3" stroke-width="0.5"/>
+  <text x="640" y="240" font-family="IBM Plex Sans,sans-serif" font-size="16" fill="rgba(245,240,235,0.62)">Frost · Hail · Drought · Wildfire Smoke</text>
+  <text x="640" y="270" font-family="IBM Plex Sans,sans-serif" font-size="15" fill="rgba(245,240,235,0.42)">The 2025–2026 growing season compressed four of wine's worst climate threats into a single year.</text>
+  <rect x="640" y="340" rx="999" width="140" height="28" fill="none" stroke="#E8875B" stroke-width="1"/>
+  <text x="710" y="359" text-anchor="middle" font-family="IBM Plex Sans,sans-serif" font-size="11" letter-spacing="2" fill="#E8875B">DATA STORY</text>
+  <text x="640" y="460" font-family="IBM Plex Sans,sans-serif" font-size="14" letter-spacing="4" fill="#8B2252" opacity="0.7">WINETHROPOCENE</text>
+</svg>
