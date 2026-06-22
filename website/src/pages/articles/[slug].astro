@@ -1,0 +1,17 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import ArticleLayout from "../components/ArticleLayout.astro";
+import { getCollection } from "astro:content";
+
+const { slug } = Astro.params;
+const articles = await getCollection("articles");
+const entry = articles.find(a => a.slug === slug);
+if (!entry) return Astro.redirect("/404");
+const { Content } = await entry.render();
+---
+
+<BaseLayout title={entry.data.title} description={entry.data.summary}>
+  <ArticleLayout entry={entry}>
+    <Content />
+  </ArticleLayout>
+</BaseLayout>

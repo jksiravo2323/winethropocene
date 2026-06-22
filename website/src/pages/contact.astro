@@ -1,0 +1,15 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import SectionHero from "../components/SectionHero.astro";
+---
+
+<BaseLayout title="Contact">
+  <SectionHero title="Contact" subtitle="Get in touch." accent="#8B2252" />
+  <div class="contact-content">
+    <p>For press inquiries, collaborations, or general questions: <a href="mailto:hello@winethropocene.com">hello@winethropocene.com</a></p>
+  </div>
+</BaseLayout>
+
+<style>
+.contact-content { max-width: 720px; margin: 0 auto; padding: 2rem; line-height: 1.7; text-align: center; }
+</style>

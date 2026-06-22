@@ -1,0 +1,41 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import SectionHero from "../components/SectionHero.astro";
+import { getCollection } from "astro:content";
+
+const atlasEntries = await getCollection("atlas");
+---
+
+<BaseLayout title="Atlas">
+  <SectionHero title="Atlas" subtitle="A living map of wine regions, varieties, and climate phenomena." accent="#5B9BD5" />
+  <div class="atlas-grid">
+    {atlasEntries.map(entry => (
+      <a href={`/atlas/${entry.slug}/`} class="atlas-card">
+        <div class="atlas-card-text">
+          <div class="atlas-tags">
+            <span class="tag cat">{entry.data.category}</span>
+            {entry.data.status && <span class={`tag status status-${entry.data.status}`}>{entry.data.status}</span>}
+          </div>
+          <h2>{entry.data.title}</h2>
+          <p class="place">{entry.data.place}, {entry.data.country}</p>
+          {entry.data.summary && <p class="summary">{entry.data.summary}</p>}
+        </div>
+      </a>
+    ))}
+  </div>
+</BaseLayout>
+
+<style>
+.atlas-grid { max-width: 1200px; margin: 0 auto; padding: 2rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.5rem; }
+.atlas-card { display: block; border: 1px solid var(--border); border-radius: 4px; padding: 1.25rem; transition: border-color 0.2s; }
+.atlas-card:hover { border-color: var(--accent); text-decoration: none; }
+.atlas-tags { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; }
+.tag { padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; border: 1px solid var(--border); }
+.cat { border-color: var(--accent); color: var(--accent); }
+.status-thriving { border-color: #4ade80; color: #4ade80; }
+.status-adapting { border-color: #facc15; color: #facc15; }
+.status-at-risk { border-color: #f87171; color: #f87171; }
+.atlas-card h2 { font-family: Georgia, serif; font-size: 1.15rem; font-weight: 300; margin: 0 0 0.25rem; color: var(--text); }
+.place { font-size: 0.75rem; color: var(--text-dim); margin: 0 0 0.5rem; }
+.summary { font-size: 0.8rem; color: var(--text-dim); line-height: 1.5; margin: 0; }
+</style>

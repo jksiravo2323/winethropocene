@@ -1,0 +1,33 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import SectionHero from "../components/SectionHero.astro";
+import { getCollection } from "astro:content";
+
+const team = await getCollection("team");
+team.sort((a, b) => a.data.order - b.data.order);
+---
+
+<BaseLayout title="About">
+  <SectionHero title="About Winethropocene" subtitle="An online magazine about wine, climate change, and adaptation." accent="#8B2252" />
+  <div class="about-content">
+    <p>Winethropocene reports from the front lines of wine and climate — covering the regions, varieties, producers, and phenomena that are shaping the future of what we drink.</p>
+    <h2>Team</h2>
+    <div class="team-grid">
+      {team.map(member => (
+        <div class="team-card">
+          <h3>{member.data.name}</h3>
+          <p>{member.data.role}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+.about-content { max-width: 720px; margin: 0 auto; padding: 2rem; line-height: 1.7; }
+.about-content h2 { font-family: Georgia, serif; font-size: 1.5rem; margin: 2rem 0 1rem; }
+.team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.5rem; margin-top: 1rem; }
+.team-card { border: 1px solid var(--border); border-radius: 4px; padding: 1.25rem; }
+.team-card h3 { font-family: Georgia, serif; font-size: 1.1rem; margin: 0 0 0.25rem; }
+.team-card p { font-size: 0.85rem; color: var(--text-dim); margin: 0; }
+</style>
