@@ -1,17 +1,30 @@
 ---
-import BaseLayout from "../layouts/BaseLayout.astro";
-import ArticleLayout from "../components/ArticleLayout.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ArticleLayout from "../../components/ArticleLayout.astro";
 import { getCollection } from "astro:content";
 
 const { slug } = Astro.params;
 const articles = await getCollection("articles");
-const entry = articles.find(a => a.slug === slug);
+const entry = articles.find((a) => a.slug === slug);
 if (!entry) return Astro.redirect("/404");
 const { Content } = await entry.render();
 ---
 
 <BaseLayout title={entry.data.title} description={entry.data.summary}>
-  <ArticleLayout entry={entry}>
-    <Content />
-  </ArticleLayout>
+  <section class="container container--wide" style="padding-top: clamp(2rem, 4vw, 3rem);">
+    <a class="eyebrow" href="/articles" style="margin-bottom: 1.5rem;">&larr; Back to Articles</a>
+    <ArticleLayout entry={entry}>
+      <Content />
+    </ArticleLayout>
+  </section>
 </BaseLayout>
+
+<style>
+.eyebrow {
+  display: inline-block;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+}
+.eyebrow:hover { color: var(--text); text-decoration: none; }
+</style>
