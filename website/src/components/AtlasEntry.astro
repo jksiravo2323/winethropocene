@@ -1,0 +1,33 @@
+---
+const { entry } = Astro.props;
+const { title, place, country, category, subcategory, status, summary, image } = entry.data;
+---
+
+<article class="atlas-entry">
+  {image && <img src={image} alt={title} class="entry-image" />}
+  <div class="entry-content">
+    <div class="entry-tags">
+      <span class="tag category">{category}</span>
+      {subcategory && <span class="tag subcategory">{subcategory}</span>}
+      {status && <span class="tag status status-{status}">{status}</span>}
+    </div>
+    <h1>{title}</h1>
+    <p class="place">{place}, {country}</p>
+    {summary && <p class="summary">{summary}</p>}
+    <slot />
+  </div>
+</article>
+
+<style>
+.atlas-entry { max-width: 720px; margin: 0 auto; }
+.entry-image { width: 100%; height: auto; border-radius: 4px; margin-bottom: 2rem; }
+.entry-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.tag { padding: 0.2rem 0.7rem; border-radius: 999px; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; border: 1px solid var(--border); }
+.category { border-color: var(--accent); color: var(--accent); }
+.status-thriving { border-color: #4ade80; color: #4ade80; }
+.status-adapting { border-color: #facc15; color: #facc15; }
+.status-at-risk { border-color: #f87171; color: #f87171; }
+.entry-content h1 { font-family: Georgia, serif; font-size: 2.2rem; font-weight: 300; margin: 0 0 0.25rem; }
+.place { color: var(--text-dim); font-size: 0.9rem; margin: 0 0 1rem; }
+.summary { font-size: 1.1rem; line-height: 1.6; color: var(--text-dim); margin-bottom: 1.5rem; }
+</style>

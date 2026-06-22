@@ -1,0 +1,16 @@
+---
+// AtlasGlobe.astro — 3D globe with billboarded pins and category filters
+---
+
+<div id="atlas-globe-container" class="atlas-globe-container">
+  <div id="atlas-globe" class="atlas-globe"></div>
+  <div id="atlas-filters" class="atlas-filters"></div>
+</div>
+
+<style>
+.atlas-globe-container { position: relative; width: 100%; height: 500px; }
+.atlas-globe { width: 100%; height: 100%; }
+.atlas-filters { position: absolute; bottom: 1rem; left: 50%; transform: translateX(-50%); display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.atlas-filters button { padding: 0.3rem 0.8rem; border: 1px solid var(--border); border-radius: 999px; background: var(--bg); color: var(--text); font-size: 0.75rem; cursor: pointer; }
+.atlas-filters button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+</style>

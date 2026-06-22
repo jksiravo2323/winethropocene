@@ -1,0 +1,16 @@
+---
+// ReportArticle.astro — layout for report-style articles (publications legacy)
+---
+
+<article class="report-article">
+  <div class="report-body">
+    <slot />
+  </div>
+</article>
+
+<style>
+.report-article { max-width: 720px; margin: 0 auto; }
+.report-body { line-height: 1.7; font-size: 1.05rem; }
+.report-body :global(h2) { font-family: Georgia, serif; font-size: 1.5rem; margin: 2rem 0 0.75rem; }
+.report-body :global(h3) { font-size: 1.15rem; margin: 1.5rem 0 0.5rem; }
+</style>

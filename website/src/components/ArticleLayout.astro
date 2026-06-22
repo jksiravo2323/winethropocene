@@ -1,0 +1,63 @@
+---
+import { Image } from "astro:assets";
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const { entry } = Astro.props;
+const { title, subtitle, summary, date, authors, theme, region, typology, heroImage, heroCredit, heroCreditUrl, accent, confidence, tags, related, references } = entry.data;
+
+const formattedDate = new Date(date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+---
+
+<BaseLayout title={title} description={summary}>
+  <article class="article">
+    <header class="article-hero">
+      {heroImage && <img src={heroImage} alt={title} class="hero-image" />}
+      <div class="hero-text">
+        <span class="typology-badge" style={accent ? `border-color:${accent};color:${accent}` : ""}>{typology?.replace("-", " ")}</span>
+        <h1>{title}</h1>
+        {subtitle && <p class="subtitle">{subtitle}</p>}
+        <div class="meta">
+          <span>{formattedDate}</span>
+          {region && <span> · {region}</span>}
+          {confidence && <span class="confidence confidence-{confidence}">{confidence}</span>}
+        </div>
+      </div>
+      {heroCredit && <p class="credit">{heroCreditUrl ? <a href={heroCreditUrl}>{heroCredit}</a> : heroCredit}</p>}
+    </header>
+    <div class="article-body">
+      <slot />
+    </div>
+    {references.length > 0 && (
+      <footer class="references">
+        <h2>References</h2>
+        <ul>
+          {references.map(ref => (
+            <li class={ref.kind}>
+              {ref.url ? <a href={ref.url}>{ref.label}</a> : ref.label}
+            </li>
+          ))}
+        </ul>
+      </footer>
+    )}
+  </article>
+</BaseLayout>
+
+<style>
+.article-hero { position: relative; margin-bottom: 3rem; }
+.hero-image { width: 100%; height: auto; display: block; border-radius: 4px; }
+.hero-text { padding: 2rem 0 1rem; max-width: 720px; margin: 0 auto; }
+.typology-badge { display: inline-block; border: 1px solid var(--accent); color: var(--accent); padding: 0.2rem 0.8rem; border-radius: 999px; font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 1rem; }
+.hero-text h1 { font-family: Georgia, serif; font-size: 2.5rem; font-weight: 300; margin: 0 0 0.5rem; }
+.subtitle { font-size: 1.15rem; color: var(--text-dim); margin: 0 0 1rem; line-height: 1.5; }
+.meta { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 0.5rem; }
+.confidence { display: inline-block; padding: 0.1rem 0.5rem; border-radius: 3px; font-size: 0.7rem; text-transform: uppercase; margin-left: 0.5rem; }
+.confidence-green { background: rgba(0,255,0,0.1); color: #4ade80; }
+.article-body { max-width: 720px; margin: 0 auto; line-height: 1.7; font-size: 1.05rem; }
+.article-body :global(h2) { font-family: Georgia, serif; font-size: 1.5rem; margin: 2rem 0 0.75rem; }
+.article-body :global(h3) { font-size: 1.15rem; margin: 1.5rem 0 0.5rem; }
+.credit { font-size: 0.75rem; color: var(--text-dim); margin: 0.5rem 0 0; text-align: right; }
+.references { max-width: 720px; margin: 3rem auto 0; padding-top: 2rem; border-top: 1px solid var(--border); }
+.references h2 { font-size: 1rem; margin-bottom: 0.75rem; }
+.references ul { list-style: none; padding: 0; }
+.references li { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.4rem; }
+</style>
