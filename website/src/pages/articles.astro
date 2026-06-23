@@ -1,7 +1,6 @@
 ---
 export const prerender = true;
 import BaseLayout from "../layouts/BaseLayout.astro";
-import PointCloudBackdrop from "../components/PointCloudBackdrop.astro";
 import SpreadCanvas from "../components/SpreadCanvas.astro";
 import SectionHero from "../components/SectionHero.astro";
 import { getCollection } from "astro:content";
@@ -25,10 +24,9 @@ const themeLabel = (t: string) =>
 ---
 
 <BaseLayout title="Articles — Winethropocene" active="/articles">
-  <PointCloudBackdrop ply="/clouds/grape-cluster.ply" size="accent" corner="tr" />
-  <SpreadCanvas />
+    <SpreadCanvas />
   <section class="container container--wide">
-    <SectionHero name="Articles" />
+    <SectionHero name="ARTICLES AND REPORTS" />
   </section>
 
   <section class="container container--wide research-intro">

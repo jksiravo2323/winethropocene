@@ -1,12 +1,9 @@
 ---
-// Interactive rotating globe for the atlas. The globe is a SAMPLED-FROM-TEXTURE
-// point cloud (public/clouds/globe-sampled.ply, from scripts/globe-sample-ply.mjs):
-// points scattered over the whole sphere, each coloured by a desaturated NASA
-// Blue Marble at its lon/lat, rendered as the site's ethereal "ghost" dots. A
-// dark backing sphere just under the surface occludes the far hemisphere so the
-// globe reads solid (no see-through oceans). Each entry is a billboarded
-// service-icon pin on the same rotating group, tinted its category accent and
-// glued to its real lat/lon.
+// Interactive rotating globe for the atlas. The globe is a Lambert-lit sphere
+// mesh (public/meshes/globe.glb) rendered through a Bayer-ordered dither
+// ShaderPass ("obra" preset — Return of the Obra Dinn stipple aesthetic, ink
+// on cream paper). A separate pin layer with billboarded category-tinted icon
+// sprites is composited on top in a second render pass.
 //
 // Speaks the shared atlas contracts:
 //   - dispatches `atlas:open` { slug }  on pin click  → opens the entry modal
@@ -27,6 +24,7 @@ const points = entries.map((e) => {
     place: e.data.place,
     country: e.data.country,
     statusGroup: statusGroupOf(e.data.status) ?? "",
+    access: e.data.access ?? "",
     climate: e.data.climateZone ?? "",
     summary: e.data.summary ?? e.data.subtitle ?? "",
     image: e.data.image ?? "",
@@ -41,7 +39,7 @@ const points = entries.map((e) => {
   class="atlas-globe"
   data-points={JSON.stringify(points)}
   role="group"
-  aria-label="Rotating globe of UBS atlas entries"
+  aria-label="Rotating 3D globe of atlas entries"
 >
   <canvas class="atlas-globe__canvas"></canvas>
   <div class="atlas-globe__tooltip" role="status" hidden></div>
@@ -51,8 +49,8 @@ const points = entries.map((e) => {
 <script>
   import * as THREE from "three";
   import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-  import { createPointsModule } from "../lib/atlas-renderer/points.js";
-  import { POINTS_PRESETS } from "../lib/atlas-renderer/presets.js";
+  import { createDitherModule } from "../lib/atlas-renderer/dither.js";
+  import { DITHER_PRESETS } from "../lib/atlas-renderer/presets.js";
   import { lonLatToVec3 } from "../lib/geo.js";
 
   type Pt = {
@@ -64,6 +62,7 @@ const points = entries.map((e) => {
     place: string;
     country: string;
     statusGroup: string;
+    access: string;
     climate: string;
     summary: string;
     image: string;
@@ -90,64 +89,52 @@ const points = entries.map((e) => {
       throw err;
     }
 
-    // One scene: the stippled-satellite sphere plus the billboarded pins, all on
-    // a single rotating group so the pins stay glued to the land.
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color("#000000");
-    const group = new THREE.Group();
-    scene.add(group);
-
+    // --- Globe: Lambert-lit sphere mesh, Bayer-ordered dither ("obra"
+    //     preset — Return of the Obra Dinn stipple aesthetic). Rendered through
+    //     its own Scene + EffectComposer (see dither.js). Pins are composited
+    //     on top in a second render pass.
     const camera = new THREE.PerspectiveCamera(45, 1, 0.01, 100);
     camera.position.set(0, 0.16, 1.48);
-    // Reference camera distance: pins are sized to look right at this distance,
-    // then held to a constant on-screen size as you zoom (see updatePins).
     const REF_DIST = camera.position.length();
 
     const controls = new OrbitControls(camera, canvas);
     controls.enableDamping = true;
     controls.dampingFactor = 0.08;
     controls.enablePan = false;
-    controls.enableZoom = true; // wheel / pinch zooms the globe
+    controls.enableZoom = true;
     controls.zoomSpeed = 0.8;
-    controls.minDistance = 0.55; // closest (globe radius is 0.5) — near the surface to split tight clusters
-    controls.maxDistance = 2.4; // farthest — keeps the globe framed
-    // Manual drag-to-spin. On phones a touch drag covers far more globe per
-    // pixel than a mouse, so it reads as twitchy — 30% gentler there. The
-    // auto-spin (ROT) is unchanged.
+    controls.minDistance = 0.55;
+    controls.maxDistance = 2.4;
     const isMobile = window.matchMedia("(max-width: 800px)").matches;
     controls.rotateSpeed = isMobile ? 0.35 : 0.5;
     controls.minPolarAngle = 0.35;
     controls.maxPolarAngle = Math.PI - 0.35;
 
-    // --- Globe: a SAMPLED-FROM-TEXTURE point cloud (the AESTHETIC LAB's
-    // "Point cloud + Sampled from texture" look). public/clouds/globe-sampled.ply
-    // (scripts/globe-sample-ply.mjs) scatters points over the whole sphere, each
-    // coloured by a desaturated NASA Blue Marble at its lon/lat — so the ethereal
-    // dots wear the real planet's tones and cover the oceans too. Positions use
-    // lonLatToVec3 (R=0.5) so continents sit under their pins.
-    const PT_SIZE = 0.0028;
-    // Opaque backing sphere just under the surface: it's the SOLID "ocean" (the
-    // point cloud is land-only) and it occludes the far-hemisphere points (they
-    // depth-test against it) so the globe never reads see-through and pins behind
-    // it stay hidden. A hair above pure black so the ocean still reads as a body.
+    // rot: 0 — we drive rotation ourselves so we can pause during drag.
+    const ditherMod = createDitherModule({
+      renderer,
+      camera,
+      url: "/meshes/globe.glb",
+      textureUrl: "/meshes/earth-land.png", // land mask → continents drive the stipple
+      initial: {
+      ...DITHER_PRESETS.obra,
+      ink: "#D1557A",   // wine-rose (--pink) — the brand-coloured stipple dots
+      paper: "#120A10", // aubergine near-black (--bg) — the page background field
+      exp: 1.1,         // lift so land stipples densely across the whole front face
+      bias: -0.02,      // mild crush keeps empty space clean without killing ocean
+      rot: 0,
+    },
+    });
+
+    // --- Pins: separate Scene composited over the dithered globe ------------
+    const pinScene = new THREE.Scene();
+    const pinGroup = new THREE.Group();
+    pinScene.add(pinGroup);
     const backing = new THREE.Mesh(
       new THREE.SphereGeometry(0.49, 64, 48),
-      new THREE.MeshBasicMaterial({ color: 0x0c0c0c }),
+      new THREE.MeshBasicMaterial({ visible: false }),
     );
-    group.add(backing);
-
-    const land = createPointsModule({
-      scene: group, // nest the points in the rotating group so they spin with it
-      url: "/clouds/globe-sampled.ply",
-      initial: {
-        ...POINTS_PRESETS.ghost,
-        mode: "sampled", // colour each point from the baked Blue Marble tone
-        count: 150000, // globe-sampled.ply is baked at 150k land points (ocean culled)
-        size: PT_SIZE,
-        rot: 0, // we drive rotation via the group so we can pause it
-        additive: true, // additive → a soft ethereal glow on the land dots
-      },
-    });
+    pinGroup.add(backing);
 
     // --- Pins: one billboarded icon sprite per entry, on the rotating group ---
     const ICON_PX = 512; // rasterize SVGs large so pins stay crisp when zoomed in
@@ -194,7 +181,7 @@ const points = entries.map((e) => {
       // `ox`/`oy` are the smoothed screen-space offset, eased each frame so pins
       // glide to their spread positions instead of snapping (no jumpiness).
       s.userData = { ...p, base: PIN_SCALE, idx: pins.length, home: s.position.clone(), ox: 0, oy: 0 };
-      group.add(s);
+      pinGroup.add(s);
       pins.push(s);
     }
 
@@ -319,7 +306,7 @@ const points = entries.map((e) => {
     function updatePins(dt: number) {
       camDir.copy(camera.position).normalize();
       camera.updateMatrixWorld();
-      group.updateMatrixWorld();
+      pinGroup.updateMatrixWorld();
       camRight.setFromMatrixColumn(camera.matrixWorld, 0); // screen-right in world
       camUp.setFromMatrixColumn(camera.matrixWorld, 1); // screen-up in world
       // Base on-screen size is held constant as you zoom out (sizeComp == t) and
@@ -342,7 +329,7 @@ const points = entries.map((e) => {
           (filter.access === "all" || d.access === filter.access);
         const mat = s.material as THREE.SpriteMaterial;
         const isHover = s === hovered;
-        homeWorld.copy(d.home).applyMatrix4(group.matrixWorld);
+        homeWorld.copy(d.home).applyMatrix4(pinGroup.matrixWorld);
         const len = homeWorld.length() || 1;
         const facing = homeWorld.dot(camDir) / len; // >0 = front hemisphere
         // Backface fade: invisible behind the limb, smooth in across the horizon.
@@ -427,8 +414,8 @@ const points = entries.map((e) => {
         if (Math.abs(d.ox) > 0.05 || Math.abs(d.oy) > 0.05) {
           const wpp = c.dist / projK; // world units per screen pixel at this depth
           off.copy(camRight).multiplyScalar(d.ox * wpp).addScaledVector(camUp, -d.oy * wpp);
-          finalWorld.copy(c.home).applyMatrix4(group.matrixWorld).add(off);
-          c.s.position.copy(group.worldToLocal(finalWorld));
+          finalWorld.copy(c.home).applyMatrix4(pinGroup.matrixWorld).add(off);
+          c.s.position.copy(pinGroup.worldToLocal(finalWorld));
         } else {
           c.s.position.copy(c.home);
         }
@@ -442,11 +429,14 @@ const points = entries.map((e) => {
 
     // --- Sizing --------------------------------------------------------------
     function resize() {
-      const w = canvas!.clientWidth;
-      const h = canvas!.clientHeight;
+      if (!canvas) return;
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
       if (!w || !h) return;
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      // Dither requires pixel ratio 1: one Bayer cell per physical pixel.
+      renderer.setPixelRatio(1);
       renderer.setSize(w, h, false);
+      ditherMod.resize(w, h);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
     }
@@ -479,14 +469,20 @@ const points = entries.map((e) => {
       const dt = clock.getDelta();
       if (!running) return;
       const spin = ROT > 0 && !dragging && !(pointerInside && hovered);
-      if (spin) group.rotation.y += ROT * dt;
+      if (spin) {
+        ditherMod.group.rotation.y += ROT * dt;
+        pinGroup.rotation.y += ROT * dt;
+      }
       controls.update();
-      // Hold points to a constant on-screen size when zooming in (cancel
-      // sizeAttenuation's 1/camDist growth); zoom-out keeps the attenuated falloff.
-      const t = camera.position.length() / REF_DIST;
-      land.setSize(PT_SIZE * Math.min(1, t));
       updatePins(dt);
-      renderer.render(scene, camera);
+      // Pass 1: render dithered globe via its EffectComposer
+      ditherMod.render();
+      // Pass 2: composite pins on top (no background clear)
+      renderer.autoClear = false;
+      renderer.autoClearDepth = true;
+      renderer.render(pinScene, camera);
+      renderer.autoClear = true;
+      renderer.autoClearDepth = true;
     }
     frame();
   }
@@ -504,7 +500,7 @@ const points = entries.map((e) => {
     border-radius: 12px;
     /* No overflow:hidden — the hover card must be able to spill past the globe
        edges. The canvas carries its own rounding so corners still look clipped. */
-    background: #000000;
+    background: #120A10; /* --bg — matches dithered globe paper */
     touch-action: none; /* let the globe own drag + pinch-zoom gestures */
   }
   .atlas-globe__canvas {
@@ -524,7 +520,7 @@ const points = entries.map((e) => {
     border: 1.5px solid var(--pink);
     border-radius: 10px;
     overflow: hidden;
-    font-family: "IBM Plex Sans", -apple-system, sans-serif;
+    font-family: var(--font-body);
     box-shadow: 0 12px 34px rgba(0, 0, 0, 0.6);
     z-index: 5;
   }
@@ -591,7 +587,7 @@ const points = entries.map((e) => {
     margin: 0;
     text-align: center;
     pointer-events: none;
-    color: var(--fg-faint);
+    color: rgba(13, 13, 13, 0.55); /* obra ink, readable on cream */
     font-size: 0.75rem;
   }
   @media (max-width: 800px) {

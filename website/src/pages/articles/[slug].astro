@@ -2,7 +2,6 @@
 export const prerender = true;
 import { getCollection, render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import PointCloudBackdrop from "../../components/PointCloudBackdrop.astro";
 import ArticleLayout from "../../components/ArticleLayout.astro";
 
 export async function getStaticPaths() {
@@ -23,8 +22,7 @@ const { Content } = await render(article);
   description={article.data.summary}
   active="/articles"
 >
-  <PointCloudBackdrop ply="/clouds/grape-cluster.ply" size="accent" corner="tr" />
-  <ArticleLayout entry={article}>
+    <ArticleLayout entry={article}>
     <Content />
   </ArticleLayout>
 </BaseLayout>

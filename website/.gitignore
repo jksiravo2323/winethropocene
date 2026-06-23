@@ -22,9 +22,12 @@ dist/
 # Python venv (atlas-renderer pipeline)
 .venv/
 
-# 3D source models + mesh exports — only pointclouds (public/clouds/) ship
+# 3D source models + mesh exports. Source blends and the redundant .gltf stay
+# local; the two assets the live atlas globe loads are tracked (exceptions below).
 source_models/
-public/meshes/
+public/meshes/*
+!public/meshes/globe.glb
+!public/meshes/earth-land.png
 
 # Local environment + secrets
 .env

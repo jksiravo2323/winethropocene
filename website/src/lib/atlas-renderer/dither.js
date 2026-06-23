@@ -25,8 +25,11 @@ export function createDitherModule(ctx) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(initial.paper);
 
-  const ambient = new THREE.AmbientLight(0xffffff, 0.35 * Math.min(initial.exp, 1.8));
-  const dirLight = new THREE.DirectionalLight(0xffffff, 1.1 * Math.min(initial.exp, 1.8));
+  // With a surface map the CONTINENTS supply the contrast, so we can afford fuller
+  // ambient — the whole front hemisphere's land reads, with the directional light
+  // only adding gentle 3D form (a soft terminator) rather than hiding half the map.
+  const ambient = new THREE.AmbientLight(0xffffff, 0.8 * Math.min(initial.exp, 1.8));
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.5 * Math.min(initial.exp, 1.8));
   dirLight.position.set(initial.lx, initial.ly, 1).normalize();
   scene.add(ambient, dirLight);
 
@@ -52,18 +55,32 @@ export function createDitherModule(ctx) {
     });
   }
 
+  // Optional equirectangular map (e.g. the earth land mask) that drives the
+  // dithered luma — bright land → dense stipple, dark ocean → sparse. flipY:false
+  // matches the glTF UV convention so continents land the right way up.
+  let surfaceMap = null;
+  if (ctx.textureUrl) {
+    surfaceMap = new THREE.TextureLoader().load(ctx.textureUrl);
+    surfaceMap.colorSpace = THREE.SRGBColorSpace;
+    surfaceMap.flipY = true; // this mesh's UVs put the north pole at the texture
+                             // bottom — flip V so continents sit the right way up
+    surfaceMap.wrapS = THREE.RepeatWrapping;
+    surfaceMap.anisotropy = 4;
+  }
+
   // Load the mesh.
   new GLTFLoader().load(ctx.url, (gltf) => {
     gltf.scene.traverse((obj) => {
       if (obj.isMesh) {
         // Lambert so the directional light produces a luma range to dither
         // against. DoubleSide hides any non-watertight gap or normal-flipped
-        // backface. flatShading gives crisp facets — the right look for ordered
-        // dither (Gouraud smoothing muddies the bands).
+        // backface. When a surface map is present we shade SMOOTH (the map
+        // supplies the detail); without one, flatShading gives crisp facets.
         obj.material = new THREE.MeshLambertMaterial({
           color: 0xffffff,
+          map: surfaceMap,
           side: THREE.DoubleSide,
-          flatShading: true,
+          flatShading: !surfaceMap,
           vertexColors: texMode,
         });
       }
@@ -95,6 +112,9 @@ export function createDitherModule(ctx) {
     });
     composer.addPass(ditherPass);
     loaded = true;
+  }, undefined, (err) => {
+    // Surface a parse/load failure instead of silently leaving the globe blank.
+    console.error('[dither] failed to load mesh ' + ctx.url, err);
   });
 
   return {

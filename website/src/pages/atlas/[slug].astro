@@ -2,9 +2,8 @@
 export const prerender = true;
 import { getCollection, render } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import PointCloudBackdrop from "../../components/PointCloudBackdrop.astro";
 import AtlasEntry from "../../components/AtlasEntry.astro";
-import { loadAtlas, cloudForCategory } from "../../lib/atlas";
+import { loadAtlas } from "../../lib/atlas";
 
 export async function getStaticPaths() {
   const entries = await getCollection("atlas");
@@ -16,7 +15,6 @@ const { bySlug } = await loadAtlas();
 const entry = bySlug.get(slug ?? "");
 if (!entry) return Astro.redirect("/404");
 
-const cloud = cloudForCategory(entry.data.category);
 ---
 
 <BaseLayout
@@ -24,8 +22,7 @@ const cloud = cloudForCategory(entry.data.category);
   description={entry.data.summary ?? entry.data.subtitle}
   active="/atlas"
 >
-  <PointCloudBackdrop ply={cloud} />
-  <section class="container container--wide" style="padding-top: clamp(2rem, 4vw, 3rem);">
+    <section class="container container--wide" style="padding-top: clamp(2rem, 4vw, 3rem);">
     <a class="eyebrow" href="/atlas" style="margin-bottom: 1.5rem;">← Back to Atlas</a>
     <AtlasEntry entry={entry} bySlug={bySlug} headingLevel={1} />
   </section>

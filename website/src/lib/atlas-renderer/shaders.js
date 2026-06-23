@@ -68,11 +68,15 @@ void main() {
     gl_FragColor = vec4(col, 1.0);
   } else {
     // ---- Binary 1-bit Bayer dither -----------------------------------------
+    // POSITIVE mapping: ink marks where the surface is LIT (high luma), paper is
+    // the empty field. So uInk = the bright stipple dots, uPaper = the dark page
+    // background — lit hemisphere fills with dots, shadow side + background fall
+    // away to bg. (The reverse mix would give an x-ray negative.)
     float luma = dot(src, vec3(0.2126, 0.7152, 0.0722));
     vec2 bayerUv = gl_FragCoord.xy / uBayerSize;
     float threshold = texture2D(uBayerTex, bayerUv).r;
     float v = step(threshold, luma + uBias);
-    gl_FragColor = vec4(mix(uInk, uPaper, v), 1.0);
+    gl_FragColor = vec4(mix(uPaper, uInk, v), 1.0);
   }
 }
 `;

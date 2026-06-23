@@ -57,19 +57,6 @@ export function accentFor(entry: AtlasEntry): string {
   return categoryMeta(entry.data.category).accent;
 }
 
-// Each category renders its own floating point-cloud object on the atlas entry
-// page. Paths are under public/clouds/.
-const CLOUD_BY_CATEGORY: Record<CategoryKey, string> = {
-  region: "/clouds/vine-tendril.ply",
-  variety: "/clouds/grape-cluster.ply",
-  phenomenon: "/clouds/globe.ply",
-  producer: "/clouds/wine-bottle.ply",
-  institution: "/clouds/barrel.ply",
-};
-
-export function cloudForCategory(key: string): string {
-  return CLOUD_BY_CATEGORY[key as CategoryKey] ?? CLOUD_BY_CATEGORY.region;
-}
 
 // --- Status taxonomy ---
 export type StatusKey =
