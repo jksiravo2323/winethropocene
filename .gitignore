@@ -1,0 +1,21 @@
+# Build output / dependencies
+node_modules/
+dist/
+*.log
+.DS_Store
+.claude/
+
+# ── Private workspace — local only, never published ──────────────────
+# This repo's public branch (origin/main) tracks the website/ only. The
+# editorial workspace below lives on disk but is NOT version-controlled here.
+# Paths are root-anchored so website/CLAUDE.md (the public dev guide) is kept.
+/01_Project_Brief/
+/02_Content/
+/03_Research/
+/04_Contacts/
+/05_Resources/
+/CLAUDE.md
+/AGENTS.md
+/WORKSPACE.md
+/homepage-preview.png
+/Website_Reuse_Plan.md
