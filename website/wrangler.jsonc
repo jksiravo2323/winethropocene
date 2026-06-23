@@ -15,5 +15,9 @@
     "enabled": true
   },
   "workers_dev": true,
-  "account_id": "99066fbf5fc8737bcbeca940dac1ac16"
+  "account_id": "99066fbf5fc8737bcbeca940dac1ac16",
+  "routes": [
+    { "pattern": "winethropocene.xyz", "custom_domain": true },
+    { "pattern": "www.winethropocene.xyz", "custom_domain": true }
+  ]
 }
