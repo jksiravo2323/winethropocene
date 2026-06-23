@@ -1,0 +1,237 @@
+---
+// SpreadCanvas — crisp square "infection" that slowly, permanently creeps across
+// the hero (homage to son-la.co, recoloured for Winethropocene). NOT Conway's Life:
+// this is a monotonic growth model — once a cell is infected it stays infected, and
+// empty cells are slowly colonised by infected neighbours. No flicker, no die-back,
+// so it reads as a calm, slowly expanding stain rather than a busy soup.
+//
+// Colour encodes cell age — the spread gradient: a newborn square flashes bone, the
+// advancing frontier is chlorotic green (--toxic), maturing to wine-rose (--pink),
+// and the old core settles into bordeaux (--pink-strong).
+//
+// Sits at z-index 0 (behind content, which is z-index 1). Honours
+// prefers-reduced-motion: paints one static stain, no loop, no pointer.
+export interface Props {
+  /** Layer opacity at the top of the page. */
+  intensity?: number;
+  /** Fade the layer out across the first viewport of scroll. */
+  fadeOnScroll?: boolean;
+}
+const { intensity = 0.6, fadeOnScroll = true } = Astro.props;
+---
+
+<canvas
+  class="spread-canvas"
+  aria-hidden="true"
+  data-intensity={intensity}
+  data-fade={fadeOnScroll ? "1" : "0"}></canvas>
+
+<script>
+  const canvas = document.querySelector<HTMLCanvasElement>("canvas.spread-canvas");
+  if (canvas) {
+    const ctx = canvas.getContext("2d", { alpha: true });
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const baseOpacity = parseFloat(canvas.dataset.intensity || "0.6");
+    const fadeOnScroll = canvas.dataset.fade === "1";
+
+    if (ctx) {
+      // ---- tuning knobs ----------------------------------------------------
+      const CELL = 4; // square size in CSS px (3px square + 1px gutter — half of prior)
+      const GAP = 1; // gutter so squares read as pixels
+      const SPREAD_EVERY = 35; // frames per growth generation — slow creep
+      const P_GROW = 0.016; // per-infected-neighbour chance an empty cell colonises
+      const P_TRAIL = 0.08; // fraction of cursor movement that seeds — lower = less reactive
+      const COVER_CAP = 0.16; // ceiling for spontaneous spread (cursor can still paint)
+      const SEEDS = 9; // initial colonies — how many separate blobs the spread starts from
+
+      // colour by cell age (the spread gradient)
+      const C_BONE = "#F5F0EB"; // newborn flash
+      const C_GREEN = "#B6C24A"; // --toxic — advancing frontier
+      const C_ROSE = "#D1557A"; // --pink — maturing
+      const C_BORD = "#8B2252"; // --pink-strong — old core
+      const colourFor = (age: number) =>
+        age === 0 ? C_BONE : age < 12 ? C_GREEN : age < 30 ? C_ROSE : C_BORD;
+
+      let cols = 0,
+        rows = 0,
+        cur: Uint8Array = new Uint8Array(0),
+        nxt: Uint8Array = new Uint8Array(0),
+        age: Uint16Array = new Uint16Array(0),
+        dpr = 1;
+
+      const idx = (c: number, r: number) => r * cols + c;
+
+      const infect = (c: number, r: number) => {
+        if (c < 0 || c >= cols || r < 0 || r >= rows) return;
+        const i = idx(c, r);
+        if (!cur[i]) {
+          cur[i] = 1;
+          age[i] = 0;
+        }
+      };
+
+      const resize = () => {
+        dpr = Math.min(2, window.devicePixelRatio || 1);
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        cols = Math.ceil(w / CELL);
+        rows = Math.ceil(h / CELL);
+        canvas.width = Math.round(w * dpr);
+        canvas.height = Math.round(h * dpr);
+        canvas.style.width = w + "px";
+        canvas.style.height = h + "px";
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        cur = new Uint8Array(cols * rows);
+        nxt = new Uint8Array(cols * rows);
+        age = new Uint16Array(cols * rows);
+        const n = reduced ? 9 : SEEDS;
+        for (let k = 0; k < n; k++)
+          infect((Math.random() * cols) | 0, (Math.random() * rows) | 0);
+      };
+
+      const coverage = () => {
+        let s = 0;
+        for (let i = 0; i < cur.length; i++) s += cur[i];
+        return cur.length ? s / cur.length : 0;
+      };
+
+      // ---- pointer: paint a permanent square trail -------------------------
+      const pending: number[] = [];
+      let lastC = -1,
+        lastR = -1;
+      if (!reduced) {
+        const onMove = (x: number, y: number) => {
+          const c = (x / window.innerWidth * cols) | 0;
+          const r = (y / window.innerHeight * rows) | 0;
+          if (lastC < 0) {
+            lastC = c;
+            lastR = r;
+          }
+          const steps = Math.max(Math.abs(c - lastC), Math.abs(r - lastR), 1);
+          for (let s = 0; s <= steps; s++) {
+            // only seed a fraction of the path so the trail reacts to less of the movement
+            if (Math.random() > P_TRAIL) continue;
+            pending.push(
+              Math.round(lastC + ((c - lastC) * s) / steps),
+              Math.round(lastR + ((r - lastR) * s) / steps),
+            );
+          }
+          lastC = c;
+          lastR = r;
+        };
+        window.addEventListener("pointermove", (e) => onMove(e.clientX, e.clientY), { passive: true });
+        window.addEventListener("pointerleave", () => (lastC = lastR = -1));
+      }
+
+      // apply cursor seeds immediately (every frame) so the trail stays responsive
+      const applyPending = () => {
+        if (!pending.length) return false;
+        for (let p = 0; p < pending.length; p += 2) infect(pending[p], pending[p + 1]);
+        pending.length = 0;
+        return true;
+      };
+
+      // one growth generation: infected cells persist (+age); empty cells are
+      // colonised slowly by infected neighbours. Monotonic — nothing ever dies.
+      const grow = () => {
+        const allow = coverage() < COVER_CAP;
+        nxt.set(cur);
+        if (allow) {
+          for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+              const i = r * cols + c;
+              if (cur[i]) continue;
+              let n = 0;
+              if (c > 0 && cur[i - 1]) n++;
+              if (c < cols - 1 && cur[i + 1]) n++;
+              if (r > 0 && cur[i - cols]) n++;
+              if (r < rows - 1 && cur[i + cols]) n++;
+              if (n && Math.random() < P_GROW * n) {
+                nxt[i] = 1;
+                age[i] = 0;
+              }
+            }
+          }
+        }
+        for (let i = 0; i < cur.length; i++)
+          if (cur[i]) age[i] = age[i] < 65000 ? age[i] + 1 : age[i];
+        const t = cur;
+        cur = nxt;
+        nxt = t;
+      };
+
+      const draw = () => {
+        ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+        const sz = CELL - GAP;
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            const i = r * cols + c;
+            if (!cur[i]) continue;
+            ctx.fillStyle = colourFor(age[i]);
+            ctx.fillRect(c * CELL, r * CELL, sz, sz);
+          }
+        }
+      };
+
+      // ---- scroll fade (hero-only feel) ------------------------------------
+      let fade = 1;
+      const applyFade = () => {
+        if (fadeOnScroll) {
+          const t = window.scrollY / (window.innerHeight * 0.9);
+          fade = Math.max(0, 1 - t);
+        }
+        canvas.style.opacity = String(baseOpacity * fade);
+      };
+
+      resize();
+      window.addEventListener("resize", resize);
+      window.addEventListener("scroll", applyFade, { passive: true });
+
+      if (reduced) {
+        for (let k = 0; k < 80; k++) grow();
+        draw();
+        canvas.style.opacity = String(baseOpacity * 0.8);
+      } else {
+        applyFade();
+        draw();
+        let frame = 0,
+          raf = 0;
+        const loop = () => {
+          if (!document.hidden && fade > 0.001) {
+            let dirty = applyPending();
+            if (frame % SPREAD_EVERY === 0) {
+              grow();
+              dirty = true;
+            }
+            if (dirty) draw();
+            frame++;
+          }
+          raf = requestAnimationFrame(loop);
+        };
+        raf = requestAnimationFrame(loop);
+        document.addEventListener("visibilitychange", () => {
+          if (document.hidden && raf) {
+            cancelAnimationFrame(raf);
+            raf = 0;
+          } else if (!raf) {
+            raf = requestAnimationFrame(loop);
+          }
+        });
+      }
+    }
+  }
+</script>
+
+<style>
+  .spread-canvas {
+    position: fixed;
+    inset: 0;
+    z-index: 0; /* behind content (z-index:1), in front of the point-cloud vignette */
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    image-rendering: pixelated;
+    opacity: 0; /* set by JS once sized; avoids a flash on load */
+    will-change: opacity;
+  }
+</style>

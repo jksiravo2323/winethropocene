@@ -1,9 +1,12 @@
 ---
-// Winethropocene wordmark splash with reveal animation.
-// Single-word serif logotype — no dashes, no split (both were UBS-Hub hangovers).
+// Winethropocene wordmark splash — all-caps, stacked over three lines for a
+// poster lockup (WINE / THROPO / CENE). Single word, no dashes/splits (both
+// UBS-Hub hangovers); the line breaks are purely visual, so the decorative
+// stack is aria-hidden and the section keeps the one readable label.
+const STACK = ["Wine", "thropo", "cene"];
 ---
 <section class="splash" aria-label="Winethropocene">
-  <div class="splash__row">
-    <span class="splash__letters splash__title">Winethropocene</span>
-  </div>
+  <span class="splash__title splash__title--stack" aria-hidden="true">
+    {STACK.map((part) => <span class="splash__line">{part}</span>)}
+  </span>
 </section>

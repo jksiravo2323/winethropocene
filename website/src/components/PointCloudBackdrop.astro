@@ -90,7 +90,7 @@ const CLOUD_POOL = [
         pointsPreset: preset,
         controls: false,
         points: {
-          bg: "#000000",
+          bg: "#120A10",
           rot: reduced ? 0 : 0.18,
         },
       });
@@ -163,18 +163,18 @@ const CLOUD_POOL = [
     background:
       radial-gradient(
         ellipse at var(--vignette-x, 78%) var(--vignette-y, 72%),
-        rgba(0, 0, 0, 0.35) 0%,
-        rgba(0, 0, 0, 0.82) 48%,
-        rgba(0, 0, 0, 0.97) 78%
+        rgba(var(--bg-rgb), 0.35) 0%,
+        rgba(var(--bg-rgb), 0.82) 48%,
+        rgba(var(--bg-rgb), 0.97) 78%
       );
   }
   .ptcloud-backdrop--accent {
     background:
       radial-gradient(
         ellipse at var(--vignette-x, 80%) var(--vignette-y, 20%),
-        rgba(0, 0, 0, 0.7) 0%,
-        rgba(0, 0, 0, 0.88) 60%,
-        rgba(0, 0, 0, 0.95) 100%
+        rgba(var(--bg-rgb), 0.7) 0%,
+        rgba(var(--bg-rgb), 0.88) 60%,
+        rgba(var(--bg-rgb), 0.95) 100%
       );
   }
 

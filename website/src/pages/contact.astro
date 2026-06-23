@@ -2,11 +2,13 @@
 export const prerender = true;
 import BaseLayout from "../layouts/BaseLayout.astro";
 import PointCloudBackdrop from "../components/PointCloudBackdrop.astro";
+import SpreadCanvas from "../components/SpreadCanvas.astro";
 import SectionHero from "../components/SectionHero.astro";
 ---
 
 <BaseLayout title="Contact — Winethropocene" active="/contact">
   <PointCloudBackdrop ply="/clouds/terroir-stone.ply" size="accent" corner="tr" />
+  <SpreadCanvas />
   <section class="container container--wide">
     <SectionHero name="Contact" />
   </section>

@@ -2,6 +2,7 @@
 export const prerender = true;
 import BaseLayout from "../layouts/BaseLayout.astro";
 import PointCloudBackdrop from "../components/PointCloudBackdrop.astro";
+import SpreadCanvas from "../components/SpreadCanvas.astro";
 import Splash from "../components/Splash.astro";
 import { CATEGORIES } from "../lib/atlas";
 import { getCollection } from "astro:content";
@@ -30,6 +31,7 @@ const atlasCount = (await getCollection("atlas")).length;
   active="/"
 >
   <PointCloudBackdrop ply="/clouds/wine-bottle.ply" />
+  <SpreadCanvas />
   <Splash />
   <p class="splash-credit">
     Wine in the age of ecological disruption

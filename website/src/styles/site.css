@@ -24,34 +24,55 @@
     U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
+/* Winethropocene Display — custom groovy wordmark/title face, traced from the
+   brand prototype specimen sheet (see 05_Resources/typeface/). Self-hosted,
+   single weight (400). Covers Basic Latin + punctuation only — NO accents yet,
+   so it sits ahead of Caprasimo in --font-poster, which fills any missing glyph
+   (e.g. accented page titles) per-glyph. Kerning for the wordmark is baked in. */
+@font-face {
+  font-family: "Winethropocene Display";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/winethropocene-display.woff2") format("woff2");
+}
+
 /* =========================================================
    Winethropocene — design tokens (iteration 2)
    Sharper hierarchy: body falls back to off-white, headings
    gain weight and size contrast, left-anchored body layout.
    ========================================================= */
 :root {
-  /* palette */
-  --bg:           #0D0D0D;    /* near-black — slightly warmer */
+  /* palette — "Mildew" (Palette A): aubergine-black base, wine-rose accent,
+     and a chlorotic green that names the spread (vine disease / infection front). */
+  --bg:           #120A10;    /* aubergine near-black — warm, wine-stained */
+  --bg-rgb:       18, 10, 16; /* --bg as channels, for rgba() scrims/vignettes */
+  --surface:      #1C1016;    /* raised surface — modals, cards on the base */
   --ink:          #0a0a0a;
   --fg:           #F5F0EB;    /* warm off-white */
   --fg-body:      rgba(245, 240, 235, 0.82);   /* default body — recedes from headings */
   --fg-soft:      rgba(245, 240, 235, 0.62);
   --fg-faint:     rgba(245, 240, 235, 0.4);
-  --pink:         #D1557A;  /* wine-rose — primary accent. Brightened for legibility:
-                               ~4.9:1 on --bg, clears WCAG AA for text + large display.
+  --pink:         #D1557A;  /* wine-rose — primary accent. ~4.7:1 on the aubergine --bg,
+                               clears WCAG AA for text + large display.
                                Headings, eyebrows, links, stat figures, primary fills. */
   --pink-strong:  #8B2252;  /* deep Bordeaux — DECORATIVE ONLY (gradients, scrims, rules).
-                               Fails text contrast on --bg (2.27:1); never set copy on it. */
-  --pink-bright:  #C4743E;  /* terracotta — secondary accent (~5.5:1 on --bg) */
+                               Fails text contrast on --bg; never set copy on it. */
+  --pink-bright:  #C4743E;  /* terracotta — secondary accent (~5.4:1 on --bg) */
   --pink-soft:    rgba(209, 85, 122, 0.08);
+  --toxic:        #B6C24A;  /* chlorotic sulphur-green — the SPREAD accent (diseased vine
+                               foliage). The infection front; matures into wine-rose, then
+                               bordeaux at the core. Decorative — never set body copy on it. */
+  --toxic-strong: #7E8B2E;  /* deeper olive — decorative companion to --toxic */
   --rule:         rgba(209, 85, 122, 0.32);
   --rule-faint:   rgba(245, 240, 235, 0.06);
 
   /* type */
   --font-display: "Fraunces", Georgia, "Times New Roman", serif; /* wonky editorial
                serif — character + warmth; carries the brand voice in all headings */
-  --font-poster: "Caprasimo", "Fraunces", Georgia, serif; /* groovy psychedelic
-               poster face — wordmark + h1 page titles only (see @font-face above) */
+  --font-poster: "Winethropocene Display", "Caprasimo", "Fraunces", Georgia, serif;
+               /* custom groovy title face — wordmark + h1 page titles. Caprasimo
+                  fallback covers accents the custom face lacks (see @font-face above) */
   --font-body: "Hanken Grotesk", -apple-system, BlinkMacSystemFont,
                "Helvetica Neue", Arial, sans-serif; /* clean contemporary grotesque */
   --fs-body:    18px;
@@ -146,7 +167,7 @@ img { max-width: 100%; height: auto; display: block; }
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(0, 0, 0, 0.85);
+  background: rgba(var(--bg-rgb), 0.85);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--rule-faint);
 }
@@ -194,9 +215,10 @@ img { max-width: 100%; height: auto; display: block; }
 .site-logo:hover { background: none; }
 .site-logo__wordmark {
   display: inline-block;
-  white-space: nowrap;
+  white-space: nowrap;                          /* capitalised, never stacked */
   font-family: var(--font-poster);             /* groovy masthead */
   font-weight: 400;
+  text-transform: uppercase;
   letter-spacing: -0.01em;
 }
 
@@ -272,7 +294,7 @@ img { max-width: 100%; height: auto; display: block; }
     inset: 0;
     width: 100vw;
     height: 100dvh;                 /* dynamic vh — no jump under mobile URL bar */
-    background: #000;
+    background: var(--bg);
     z-index: 40;
     display: flex;
     align-items: flex-start;
@@ -462,22 +484,23 @@ p + p { margin-top: 0; }
 }
 .splash__title {
   font-family: var(--font-poster);             /* groovy poster wordmark */
-  /* Sized so the single 14-char wordmark "Winethropocene" fits the padded
-     container at every width. Caprasimo runs wider than Fraunces, so the max
-     is pulled back from 8.5rem (overflow-x:clip on .splash is the backstop). */
-  font-size: clamp(1.9rem, 8.4vw, 7.1rem);
-  font-weight: 400;                            /* Caprasimo single weight */
+  font-weight: 400;
   color: var(--pink);
-  line-height: 0.95;
-  letter-spacing: -0.02em;
   margin: 0;
-  display: inline-block;
 }
-.splash__row {
+/* Stacked, all-caps poster lockup: WINE / THROPO / CENE on three lines,
+   left-anchored. Widest line is 6 caps (THROPO), so the size is pulled back
+   from the 4-char version to keep it within the padded container (overflow-x:
+   clip on .splash is the backstop against any bleed). */
+.splash__title--stack {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  text-transform: uppercase;
+  font-size: clamp(2.9rem, 13vw, 8.2rem);
+  line-height: 0.84;
+  letter-spacing: -0.015em;
 }
-.splash__letters { white-space: nowrap; display: inline-block; }
+.splash__line { display: block; white-space: nowrap; }
 
 /* Autonomy attribution under the splash — small, aligned to the splash's right edge. */
 .splash-credit {
@@ -500,9 +523,11 @@ p + p { margin-top: 0; }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.splash__letters { opacity: 0; animation: splash-fade 700ms var(--ease-out) both; }
-
-.splash__row > .splash__letters { animation-delay: 80ms; }
+.splash__line { opacity: 0; animation: splash-fade 700ms var(--ease-out) both; }
+.splash__line:nth-child(1) { animation-delay: 60ms; }
+.splash__line:nth-child(2) { animation-delay: 150ms; }
+.splash__line:nth-child(3) { animation-delay: 240ms; }
+.splash__line:nth-child(4) { animation-delay: 330ms; }
 
 /* =========================================================
    Section hero — variants
@@ -566,7 +591,7 @@ p + p { margin-top: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .splash__letters,
+  .splash__line,
   .section-hero__letters, .section-hero__name {
     animation: none;
     opacity: 1;
@@ -1812,7 +1837,7 @@ p + p { margin-top: 0; }
   padding: 0;
   border: 1px solid var(--rule);
   border-radius: 14px;
-  background: #0d0d0d;
+  background: var(--surface);
   color: var(--fg-body);
   overflow: hidden;
 }

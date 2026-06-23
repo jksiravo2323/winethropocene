@@ -1,6 +1,7 @@
 ---
 export const prerender = true;
 import BaseLayout from "../layouts/BaseLayout.astro";
+import SpreadCanvas from "../components/SpreadCanvas.astro";
 import SectionHero from "../components/SectionHero.astro";
 import ProgrammeMap from "../components/ProgrammeMap.astro";
 import AtlasGlobe from "../components/AtlasGlobe.astro";
@@ -45,6 +46,7 @@ const dotsSrc = (img?: string) =>
   description="A live atlas of wine regions, varieties, and climate phenomena — documenting where wine is thriving, adapting, and transforming."
   active="/atlas"
 >
+  <SpreadCanvas />
   <section class="container container--wide">
     <SectionHero name="Atlas" variant="splash" />
   </section>

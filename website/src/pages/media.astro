@@ -2,6 +2,7 @@
 export const prerender = true;
 import BaseLayout from "../layouts/BaseLayout.astro";
 import PointCloudBackdrop from "../components/PointCloudBackdrop.astro";
+import SpreadCanvas from "../components/SpreadCanvas.astro";
 import SectionHero from "../components/SectionHero.astro";
 import { getCollection } from "astro:content";
 
@@ -17,6 +18,7 @@ const dateLabel = (d?: Date) =>
 
 <BaseLayout title="Media — Winethropocene" active="/media">
   <PointCloudBackdrop ply="/clouds/barrel.ply" />
+  <SpreadCanvas />
   <section class="container container--wide">
     <SectionHero name="Media" />
   </section>

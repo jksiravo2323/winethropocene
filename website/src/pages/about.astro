@@ -2,6 +2,7 @@
 export const prerender = true;
 import BaseLayout from "../layouts/BaseLayout.astro";
 import PointCloudBackdrop from "../components/PointCloudBackdrop.astro";
+import SpreadCanvas from "../components/SpreadCanvas.astro";
 import SectionHero from "../components/SectionHero.astro";
 import { getCollection, render } from "astro:content";
 
@@ -13,6 +14,7 @@ const rendered = await Promise.all(members.map((m) => render(m)));
 
 <BaseLayout title="About — Winethropocene" active="/about">
   <PointCloudBackdrop ply="/clouds/wine-glass.ply" />
+  <SpreadCanvas />
   <section class="container container--wide">
     <SectionHero name="About" />
   </section>
