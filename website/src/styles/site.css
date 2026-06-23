@@ -78,11 +78,15 @@
   --fs-body:    18px;
   --lh-body:    1.6;
   --fs-lead:    clamp(1.35rem, 1.1rem + 0.85vw, 1.65rem);
-  --fs-meta:    0.82rem;
-  --fs-eyebrow: 0.72rem;
-  --fs-h1:      clamp(4.5rem, 9vw, 8.5rem);    /* poster display, weight 300 */
+  --fs-meta:    0.82rem;                       /* bylines, dates, small meta */
+  --fs-eyebrow: 0.72rem;                       /* all-caps kickers / tiny labels */
+  --fs-caption: 0.78rem;                       /* captions, chips, footer labels */
   --fs-h2:      clamp(2.25rem, 4.5vw, 3.75rem); /* section, pink, weight 400 */
   --fs-h3:      0.9rem;                        /* sub-heading caps, pink, weight 500 */
+  /* title ladder — keep these in descending order; page titles must read as
+     primary, deeper-page (article) titles a clear step below the homepage hero */
+  --fs-page-title:    clamp(2.6rem, 11vw, 7rem);  /* section-page hero (poster, caps, pink) */
+  --fs-article-title: clamp(2.6rem, 6.5vw, 5rem); /* in-article H1 (Fraunces, accent) */
   --ls-display: -0.045em;
   --ls-heading: -0.02em;
   --ls-caps:    0.16em;
@@ -235,7 +239,7 @@ img { max-width: 100%; height: auto; display: block; }
   color: var(--fg);
   text-transform: uppercase;
   letter-spacing: var(--ls-caps);
-  font-size: 0.78rem;
+  font-size: var(--fs-caption);
   background-size: 0% 2px;
 }
 .site-nav a:hover,
@@ -368,8 +372,10 @@ h1, h2, h3, h4 {
   color: var(--fg);
 }
 h1 {
-  font-family: var(--font-poster);             /* groovy poster face — h1 only */
-  font-size: var(--fs-h1);
+  font-family: var(--font-poster);             /* groovy poster face = signage; a bare
+                                                  page-level h1 reads at the page-title scale.
+                                                  (Article H1 overrides to Fraunces — .report__title) */
+  font-size: var(--fs-page-title);
   letter-spacing: var(--ls-display);
   color: var(--fg);
   font-weight: 400;                            /* Caprasimo ships a single weight */
@@ -448,17 +454,13 @@ p + p { margin-top: 0; }
 }
 
 /* =========================================================
-   Section-heading — flush-left display title (no rule prefix)
+   Section-heading — a section-opener h2 (flush-left, no rule prefix).
+   Always applied to an <h2>, so it inherits all type from the base h2
+   rule; only the large bottom margin (breathing room before the section
+   body) differs.
    ========================================================= */
 .section-heading {
-  font-family: var(--font-display);
-  font-size: var(--fs-h2);
-  color: var(--pink);
-  letter-spacing: var(--ls-heading);
-  margin: 0 0 clamp(4rem, 6vw, 5.5rem);
-  text-transform: none;
-  font-weight: 400;
-  line-height: 1.0;
+  margin-bottom: clamp(4rem, 6vw, 5.5rem);
 }
 
 .section-heading--sub {
@@ -508,7 +510,7 @@ p + p { margin-top: 0; }
   margin: -0.5rem auto 0;
   padding: 0 clamp(1.5rem, 4vw, 4rem);
   text-align: right;
-  font-size: 0.7rem;
+  font-size: var(--fs-eyebrow);
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--fg-soft);
@@ -551,7 +553,7 @@ p + p { margin-top: 0; }
 }
 .section-hero__letters {
   font-family: var(--font-poster);             /* groovy page-title display */
-  font-size: clamp(2rem, 9.5vw, 6rem);
+  font-size: var(--fs-page-title);
   font-weight: 400;                            /* Caprasimo single weight */
   color: var(--pink);
   line-height: 0.95;
@@ -561,7 +563,7 @@ p + p { margin-top: 0; }
 }
 .section-hero__name {
   font-family: var(--font-poster);             /* groovy page-title display */
-  font-size: clamp(2rem, 9.5vw, 6rem);
+  font-size: var(--fs-page-title);
   font-weight: 400;
   color: var(--pink);
   line-height: 0.95;
@@ -586,7 +588,7 @@ p + p { margin-top: 0; }
   align-items: center;
 }
 .section-hero--title .section-hero__name {
-  font-size: clamp(2rem, 9.5vw, 6rem);
+  font-size: var(--fs-page-title);
   animation: splash-fade 700ms var(--ease-out) 300ms both;
 }
 
@@ -694,7 +696,7 @@ p + p { margin-top: 0; }
 }
 .pub-year {
   color: var(--pink);
-  font-size: 0.78rem;
+  font-size: var(--fs-caption);
   letter-spacing: var(--ls-caps);
   text-transform: uppercase;
 }
@@ -782,7 +784,7 @@ p + p { margin-top: 0; }
 }
 .pub-row__index {
   display: inline-block;
-  font-size: 0.78rem;
+  font-size: var(--fs-caption);
   letter-spacing: var(--ls-caps);
   text-transform: uppercase;
   color: var(--pink);
@@ -862,7 +864,7 @@ p + p { margin-top: 0; }
   background: var(--pink-soft);
   border: 1px dashed rgba(255, 180, 249, 0.4);
   color: var(--fg-faint);
-  font-size: 0.78rem;
+  font-size: var(--fs-caption);
   letter-spacing: var(--ls-caps);
   text-transform: uppercase;
 }
@@ -885,7 +887,7 @@ p + p { margin-top: 0; }
 }
 .pub-meta-block { display: grid; gap: 0.5rem; }
 .pub-meta-label {
-  font-size: 0.72rem;
+  font-size: var(--fs-eyebrow);
   letter-spacing: var(--ls-caps);
   text-transform: uppercase;
   color: var(--fg-faint);
@@ -948,7 +950,7 @@ p + p { margin-top: 0; }
 }
 .team-grid .member .role {
   color: var(--pink);
-  font-size: 0.78rem;
+  font-size: var(--fs-caption);
   text-transform: uppercase;
   letter-spacing: var(--ls-caps);
   margin-bottom: 0.6rem;
@@ -969,7 +971,7 @@ p + p { margin-top: 0; }
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: var(--ls-caps);
-  font-size: 0.78rem;
+  font-size: var(--fs-caption);
   border: 0;
   border-radius: 999px;
   cursor: pointer;
@@ -1061,7 +1063,7 @@ p + p { margin-top: 0; }
   align-items: center;
   justify-content: center;
   color: var(--fg-faint);
-  font-size: 0.72rem;
+  font-size: var(--fs-eyebrow);
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -1128,19 +1130,19 @@ p + p { margin-top: 0; }
 }
 .member-cap strong {
   color: var(--pink);
-  font-size: 0.78rem;
+  font-size: var(--fs-caption);
   font-weight: 500;
   line-height: 1.2;
   letter-spacing: -0.01em;
 }
 .member-cap__blurb {
   color: rgba(255, 255, 255, 0.82);
-  font-size: 0.72rem;
+  font-size: var(--fs-eyebrow);
   line-height: 1.4;
 }
 .member-cap__link {
   color: var(--pink-bright);
-  font-size: 0.72rem;
+  font-size: var(--fs-eyebrow);
   font-weight: 500;
   background: none;
 }
@@ -1165,7 +1167,7 @@ p + p { margin-top: 0; }
   .member-wall { grid-template-columns: repeat(2, 1fr); }
   /* Touch devices can't hover; tapping a tile focuses it (tabindex=0) and
      :focus-within reveals the caption. */
-  .member-cap { font-size: 0.7rem; }
+  .member-cap { font-size: var(--fs-eyebrow); }
 }
 
 /* =========================================================
@@ -1221,7 +1223,7 @@ p + p { margin-top: 0; }
   min-height: 32px;
 }
 .media-tile__outlet {
-  font-size: 0.78rem;
+  font-size: var(--fs-caption);
   text-transform: uppercase;
   letter-spacing: var(--ls-caps);
   color: var(--pink);
@@ -1446,7 +1448,7 @@ p + p { margin-top: 0; }
   margin: 0 0 1rem;
   padding: 0;
   list-style: none;
-  font-size: 0.78rem;
+  font-size: var(--fs-caption);
   text-transform: uppercase;
   letter-spacing: var(--ls-caps);
 }
@@ -1598,7 +1600,7 @@ p + p { margin-top: 0; }
 .atlas-select__label {
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  font-size: 0.7rem;
+  font-size: var(--fs-eyebrow);
   color: var(--fg-faint);
 }
 .atlas-select__input {
@@ -1630,7 +1632,7 @@ p + p { margin-top: 0; }
 }
 .atlas-filter-clear {
   font: inherit;
-  font-size: 0.78rem;
+  font-size: var(--fs-caption);
   color: var(--fg-faint);
   background: none;
   border: 0;
@@ -1643,7 +1645,7 @@ p + p { margin-top: 0; }
   color: var(--pink);
 }
 .atlas-filter-count {
-  font-size: 0.78rem;
+  font-size: var(--fs-caption);
   color: var(--fg-faint);
   margin-left: auto;
 }
@@ -1738,7 +1740,7 @@ p + p { margin-top: 0; }
   position: absolute;
   left: 0.75rem;
   bottom: 0.75rem;
-  font-size: 0.7rem;
+  font-size: var(--fs-eyebrow);
   text-transform: uppercase;
   letter-spacing: var(--ls-caps);
   color: #0a0a0a;
@@ -1821,7 +1823,7 @@ p + p { margin-top: 0; }
 /* --- Tag chips (shared) --- */
 .atlas-chip {
   display: inline-block;
-  font-size: 0.78rem;
+  font-size: var(--fs-caption);
   color: var(--fg-soft);
   background: var(--pink-soft);
   border: 1px solid var(--rule-faint);
@@ -2010,7 +2012,7 @@ p + p { margin-top: 0; }
 /* The auto-generated "Footnotes" label ships as .sr-only with no rule on this
    site — render it as a small, subtle heading rather than a big pink one. */
 .atlas-entry__article .footnotes #footnote-label {
-  font-size: 0.7rem;
+  font-size: var(--fs-eyebrow);
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: var(--ls-caps);
@@ -2036,7 +2038,7 @@ p + p { margin-top: 0; }
   margin: 0 0 0.75rem;
 }
 .atlas-entry__refs-kind {
-  font-size: 0.7rem;
+  font-size: var(--fs-eyebrow);
   text-transform: uppercase;
   letter-spacing: var(--ls-caps);
   color: var(--fg-faint);
@@ -2083,7 +2085,7 @@ p + p { margin-top: 0; }
   color: var(--accent);
 }
 .atlas-related__title { color: var(--fg); font-size: 0.95rem; }
-.atlas-related__place { color: var(--fg-faint); font-size: 0.78rem; }
+.atlas-related__place { color: var(--fg-faint); font-size: var(--fs-caption); }
 
 .atlas-back { margin-bottom: 1rem; }
 .atlas-back a { color: var(--fg-soft); font-size: 0.85rem; }
@@ -2136,12 +2138,16 @@ p + p { margin-top: 0; }
   color: var(--accent);
 }
 .report__title {
+  /* in-article H1 — editorial serif (NOT the poster face, which is reserved for
+     signage: wordmark + section-page heroes). Accent-coloured so per-article
+     accents theme it; defaults to wine-rose --pink. */
   margin: 0 0 1rem;
-  font-size: clamp(2.4rem, 6vw, 4.2rem);
-  font-weight: 300;
-  line-height: 1.0;
-  letter-spacing: var(--ls-display);
-  color: var(--fg);
+  font-family: var(--font-display);
+  font-size: var(--fs-article-title);
+  font-weight: 400;
+  line-height: 1.02;
+  letter-spacing: var(--ls-heading);
+  color: var(--accent);
 }
 .report__subtitle {
   margin: 0 0 1.5rem;
@@ -2166,7 +2172,7 @@ p + p { margin-top: 0; }
 .report__hero img { width: 100%; border-radius: 6px; }
 .report__hero-credit {
   margin-top: 0.4rem;
-  font-size: 0.7rem;
+  font-size: var(--fs-eyebrow);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--fg-faint);
@@ -2345,7 +2351,7 @@ p + p { margin-top: 0; }
 }
 .fig__num {
   white-space: nowrap;
-  font-size: 0.7rem;
+  font-size: var(--fs-eyebrow);
   text-transform: uppercase;
   letter-spacing: var(--ls-caps);
   font-weight: 500;
