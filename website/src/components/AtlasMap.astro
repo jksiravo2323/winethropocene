@@ -88,8 +88,9 @@ const points = entries.map((e) => {
     const pts: Pt[] = JSON.parse(root.dataset.points ?? "[]");
 
     // ---- tuning knobs ----------------------------------------------------
-    const CELL = 3; // square pitch in CSS px (constant on screen at every zoom)
-    const SQUARE = 2; // drawn square size — 1px gutter so squares read as pixels
+    const CELL = 5; // square pitch in CSS px (constant on screen at every zoom)
+    const SQUARE = 4; // drawn square size — 1px gutter. Keep the gap a small % of
+    // the cell; too large a gap ratio reads as a dark grid that muddies the colours.
     // Ocean test runs against a WATER mask (earth-water.png: bright = water, dark
     // = land, 4096px so it resolves narrow seas the old 2048 land mask fused over,
     // e.g. the English Channel). A cell is sea (draw nothing) when its averaged
@@ -212,7 +213,7 @@ const points = entries.map((e) => {
     // Max zoom. One native texel ≈ one cell is the point where the DEM runs out
     // of detail; MAX_OVERSAMPLE lets you keep zooming past that (texels just span
     // several cells — blockier, but you can get down to country/region scale).
-    const MAX_OVERSAMPLE = 9;
+    const MAX_OVERSAMPLE = 5;
     const maxScale = () => {
       const nativeW = elev ? elev[0].w : 4096;
       return (CELL * nativeW * MAX_OVERSAMPLE) / 360;
@@ -315,25 +316,46 @@ const points = entries.map((e) => {
         // crisp (a cell-matched mip blurs narrow seas shut — e.g. England fusing to
         // the mainland). Both maps are 4096 so the levels line up.
         const WA = water[Math.max(0, pickLevel(water, cellDeg) - 1)];
+        const EW = EL.w,
+          EH = EL.h,
+          ED = EL.data;
         for (let r = 0; r < rows; r++) {
           const lat = centerLat - (r * CELL + CELL / 2 - H / 2) / scale;
           if (lat < -90 || lat > 90) continue;
           const v = (90 - lat) / 180;
+          // water mask: nearest (crisp coast)
           let wy = (v * WA.h) | 0;
           if (wy >= WA.h) wy = WA.h - 1;
-          let ey = (v * EL.h) | 0;
-          if (ey >= EL.h) ey = EL.h - 1;
           const waRow = wy * WA.w;
-          const elRow = ey * EL.w;
+          // elevation: BILINEAR — interpolate between texels so that zooming past
+          // the DEM's native resolution reveals smooth contour gradients per square
+          // instead of nearest-neighbour blocks ("rough chunks"). Set up the two
+          // sample rows + vertical weight once per screen row.
+          let efy = v * EH - 0.5;
+          let ey0 = Math.floor(efy);
+          const ety = efy - ey0;
+          if (ey0 < 0) ey0 = 0;
+          let ey1 = ey0 + 1;
+          if (ey1 >= EH) ey1 = EH - 1;
+          const eR0 = ey0 * EW,
+            eR1 = ey1 * EW;
           for (let c = 0; c < cols; c++) {
             const lon = centerLon + (c * CELL + CELL / 2 - W / 2) / scale;
-            const u = (((lon + 180) % 360) + 360) % 360 / 360;
+            const u = ((((lon + 180) % 360) + 360) % 360) / 360;
             let wx = (u * WA.w) | 0;
             if (wx >= WA.w) wx = WA.w - 1;
             if (WA.data[waRow + wx] > WATER_T) continue; // sea → draw nothing
-            let ex = (u * EL.w) | 0;
-            if (ex >= EL.w) ex = EL.w - 1;
-            ctx!.fillStyle = BANDS[BAND_LUT[EL.data[elRow + ex]]];
+            // bilinear x with longitude wrap
+            const efx = u * EW - 0.5;
+            const ex0 = Math.floor(efx);
+            const etx = efx - ex0;
+            const ex0w = (((ex0 % EW) + EW) % EW) | 0;
+            let ex1w = ex0w + 1;
+            if (ex1w >= EW) ex1w = 0;
+            const top = ED[eR0 + ex0w] + (ED[eR0 + ex1w] - ED[eR0 + ex0w]) * etx;
+            const bot = ED[eR1 + ex0w] + (ED[eR1 + ex1w] - ED[eR1 + ex0w]) * etx;
+            const val = (top + (bot - top) * ety) | 0;
+            ctx!.fillStyle = BANDS[BAND_LUT[val]];
             ctx!.fillRect(c * CELL, r * CELL, SQUARE, SQUARE);
           }
         }
@@ -567,9 +589,10 @@ const points = entries.map((e) => {
     display: block;
     width: 100%;
     height: 100%;
-    /* All pins use the palette's deep olive green (--toxic-strong) rather than
-       per-category accents. */
-    background: var(--toxic-strong, #7e8b2e);
+    /* All pins use the palette's bright chlorotic green (--toxic) rather than
+       per-category accents — the direct complement of the red elevation ramp,
+       so the single-line glyphs stand out at every zoom. */
+    background: var(--toxic, #b6c24a);
     -webkit-mask: var(--icon) center / contain no-repeat;
     mask: var(--icon) center / contain no-repeat;
     transition: transform 0.15s ease;
