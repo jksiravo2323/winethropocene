@@ -36,10 +36,10 @@ const { intensity = 0.6, fadeOnScroll = true } = Astro.props;
 
     if (ctx) {
       // ---- tuning knobs ----------------------------------------------------
-      const CELL = 4; // square size in CSS px (3px square + 1px gutter — half of prior)
+      const CELL = 5; // square size in CSS px (4px square + 1px gutter — ~33% larger square)
       const GAP = 1; // gutter so squares read as pixels
-      const SPREAD_EVERY = 35; // frames per growth generation — slow creep
-      const P_GROW = 0.016; // per-infected-neighbour chance an empty cell colonises
+      const SPREAD_EVERY = 22; // frames per growth generation — faster creep
+      const P_GROW = 0.02; // per-infected-neighbour chance an empty cell colonises
       const P_TRAIL = 0.08; // fraction of cursor movement that seeds — lower = less reactive
       const COVER_CAP = 0.16; // ceiling for spontaneous spread (cursor can still paint)
       const SEEDS = 9; // initial colonies — how many separate blobs the spread starts from

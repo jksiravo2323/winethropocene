@@ -1,8 +1,54 @@
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Hanken+Grotesk:wght@300..600&display=swap");
+/* ============================================================
+   Fonts — all self-hosted in /public/fonts (no external requests)
+   - PicNic ...... the WINETHROPOCENE wordmark + poster page titles (--font-poster)
+   - Velvelyne ... everything else — headings (--font-display) + body (--font-body),
+                   registered across four cuts so font-weight pulls the variant.
+   - Caprasimo ... kept only as an accent-glyph fallback behind PicNic.
+   ============================================================ */
+
+/* PicNic — display face for the wordmark + page titles. Single weight (400). */
+@font-face {
+  font-family: "PicNic";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/picnic-regular.woff2") format("woff2");
+}
+
+/* Velvelyne — headings + body. Four cuts under one family, so font-weight
+   selects the variant: 300 Light · 400 Book · 500 Regular · 700 Bold. */
+@font-face {
+  font-family: "Velvelyne";
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url("/fonts/velvelyne-light.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Velvelyne";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/velvelyne-book.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Velvelyne";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/velvelyne-regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Velvelyne";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/velvelyne-bold.woff2") format("woff2");
+}
 
 /* Caprasimo — groovy/psychedelic poster display (OFL, by Eduardo Tunni).
-   Self-hosted in /public/fonts; carries the "Winethropocene" wordmark + h1
-   page titles only. Single weight (400). */
+   Self-hosted in /public/fonts; kept ONLY as an accent-glyph fallback behind
+   PicNic for the rare accented page title. Single weight (400). */
 @font-face {
   font-family: "Caprasimo";
   font-style: normal;
@@ -22,19 +68,6 @@
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
     U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
     U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-
-/* Winethropocene Display — custom groovy wordmark/title face, traced from the
-   brand prototype specimen sheet (see 05_Resources/typeface/). Self-hosted,
-   single weight (400). Covers Basic Latin + punctuation only — NO accents yet,
-   so it sits ahead of Caprasimo in --font-poster, which fills any missing glyph
-   (e.g. accented page titles) per-glyph. Kerning for the wordmark is baked in. */
-@font-face {
-  font-family: "Winethropocene Display";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("/fonts/winethropocene-display.woff2") format("woff2");
 }
 
 /* =========================================================
@@ -68,13 +101,13 @@
   --rule-faint:   rgba(245, 240, 235, 0.06);
 
   /* type */
-  --font-display: "Fraunces", Georgia, "Times New Roman", serif; /* wonky editorial
-               serif — character + warmth; carries the brand voice in all headings */
-  --font-poster: "Winethropocene Display", "Caprasimo", "Fraunces", Georgia, serif;
-               /* custom groovy title face — wordmark + h1 page titles. Caprasimo
-                  fallback covers accents the custom face lacks (see @font-face above) */
-  --font-body: "Hanken Grotesk", -apple-system, BlinkMacSystemFont,
-               "Helvetica Neue", Arial, sans-serif; /* clean contemporary grotesque */
+  --font-display: "Velvelyne", Georgia, "Times New Roman", serif; /* groovy workshop
+               face — carries the brand voice in all headings (Regular/Bold cuts) */
+  --font-poster: "PicNic", "Caprasimo", Georgia, serif;
+               /* PicNic — the WINETHROPOCENE wordmark + h1 page titles. Caprasimo
+                  fallback covers accents PicNic may lack (see @font-face above) */
+  --font-body: "Velvelyne", -apple-system, BlinkMacSystemFont,
+               "Helvetica Neue", Arial, sans-serif; /* Velvelyne (Book) for body copy */
   --fs-body:    18px;
   --lh-body:    1.6;
   --fs-lead:    clamp(1.35rem, 1.1rem + 0.85vw, 1.65rem);
@@ -248,40 +281,30 @@ img { max-width: 100%; height: auto; display: block; }
   background-size: 100% 2px;
 }
 
+/* Editorial text toggle — a typeset "Index" / "Close" word in place of the
+   generic three-bar hamburger (the fork's corporate tell). Mobile-only; the
+   desktop horizontal nav is untouched. */
 .site-nav__toggle {
   display: none;
   grid-column: 3;
   justify-self: end;
-  width: 44px;
-  height: 44px;
-  padding: 0;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 0.2rem;
   background: none;
   border: 0;
   cursor: pointer;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
   position: relative;
-  z-index: 50;            /* stay above the open-menu overlay so the X is tappable */
+  z-index: 50;            /* stay above the open-menu overlay so "Close" is tappable */
+  color: var(--pink);
+  font-family: var(--font-body);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--ls-caps);
 }
-.site-nav__toggle-bar {
-  display: block;
-  width: 24px;
-  height: 2px;
-  background: var(--pink);
-  border-radius: 999px;
-  transition: transform 200ms var(--ease-out), opacity 200ms var(--ease-out);
-}
-.site-nav__toggle[aria-expanded="true"] .site-nav__toggle-bar:nth-child(1) {
-  transform: translateY(8px) rotate(45deg);
-}
-.site-nav__toggle[aria-expanded="true"] .site-nav__toggle-bar:nth-child(2) {
-  opacity: 0;
-}
-.site-nav__toggle[aria-expanded="true"] .site-nav__toggle-bar:nth-child(3) {
-  transform: translateY(-8px) rotate(-45deg);
-}
+.site-nav__toggle-label::after { content: "Index"; }
+.site-nav__toggle[aria-expanded="true"] .site-nav__toggle-label::after { content: "Close"; }
 
 @media (max-width: 800px) {
   .site-header__inner {
@@ -302,8 +325,8 @@ img { max-width: 100%; height: auto; display: block; }
     z-index: 40;
     display: flex;
     align-items: flex-start;
-    justify-content: center;
-    padding-top: 6rem;
+    justify-content: flex-start;
+    padding: clamp(5.5rem, 18vh, 9rem) clamp(1.5rem, 8vw, 4rem) 3rem;
     overflow-y: auto;
     overscroll-behavior: contain;   /* stop rubber-band / scroll chaining */
     opacity: 0;
@@ -317,15 +340,26 @@ img { max-width: 100%; height: auto; display: block; }
   .site-nav ul {
     flex-direction: column;
     gap: 0;
-    align-items: stretch;
-    width: min(360px, 80vw);
+    align-items: flex-start;
+    width: 100%;
   }
-  .site-nav li { text-align: center; }
+  .site-nav li { text-align: left; }
+  /* Full-screen editorial index — large poster-type links, not a tidy list */
   .site-nav a {
     display: block;
-    padding: 1rem 0;
-    font-size: 1rem;
+    padding: 0.4rem 0;
     min-height: 44px;
+    font-family: var(--font-poster);
+    font-size: clamp(2.4rem, 11vw, 3.75rem);
+    line-height: 1.06;
+    text-transform: none;
+    letter-spacing: -0.01em;
+    color: var(--pink);
+    background-size: 0% 2px;
+  }
+  .site-nav a:hover,
+  .site-nav a[aria-current="page"] {
+    background-size: 100% 2px;      /* brand underline-wipe marks hover / current page */
   }
   body.nav-open { overflow: hidden; overscroll-behavior: none; }
   /* The open menu locks the body with position:fixed, which would otherwise
@@ -490,19 +524,35 @@ p + p { margin-top: 0; }
   color: var(--pink);
   margin: 0;
 }
-/* Stacked, all-caps poster lockup: WINE / THROPO / CENE on three lines,
-   left-anchored. Widest line is 6 caps (THROPO), so the size is pulled back
-   from the 4-char version to keep it within the padded container (overflow-x:
-   clip on .splash is the backstop against any bleed). */
+/* Single-line poster wordmark: the three fragments (WINE·THROPO·CENE) sit on
+   ONE row so they read as the unbroken word WINETHROPOCENE spanning the page.
+   The vw term sizes it to fill the padded --max-wide container; overflow-x:
+   clip on .splash is the backstop against any bleed. On narrow viewports it
+   re-stacks into the three-line lockup (see media query below). */
 .splash__title--stack {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: center;
   text-transform: uppercase;
-  font-size: clamp(2.9rem, 13vw, 8.2rem);
-  line-height: 0.84;
-  letter-spacing: -0.015em;
+  font-size: clamp(2.6rem, 10.5vw, 9.2rem);
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
 }
 .splash__line { display: block; white-space: nowrap; }
+
+/* Mobile: re-stack into WINE / THROPO / CENE and let it scale up to fill the
+   narrow column. */
+@media (max-width: 680px) {
+  .splash__title--stack {
+    flex-direction: column;
+    align-items: center;
+    font-size: clamp(3.4rem, 23vw, 7rem);
+    line-height: 0.82;
+    letter-spacing: -0.015em;
+  }
+}
 
 /* Autonomy attribution under the splash — small, aligned to the splash's right edge. */
 .splash-credit {
