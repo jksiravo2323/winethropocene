@@ -166,9 +166,9 @@ const points = entries.map((e) => {
       const [x, y, z] = lonLatToVec3(p.lon, p.lat, 0.5);
       const mat = new THREE.SpriteMaterial({
         map: iconTexture(p.category),
-        // All pins share the bright chlorotic green (--toxic) so the single-line
+        // All pins share the palette olive (--toxic-strong) so the single-line
         // glyphs read against the wine-red globe, matching the map view.
-        color: new THREE.Color("#B6C24A"),
+        color: new THREE.Color("#7E8B2E"),
         transparent: true,
         depthTest: false,
         depthWrite: false,
