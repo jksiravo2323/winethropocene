@@ -10,7 +10,7 @@ export interface Props {
 
 const {
   title,
-  description = "Winethropocene — wine, climate, and adaptation. An editorial project documenting the transformation of the global wine industry in the age of ecological disruption.",
+  description = "Winethropocene reads the climate crisis through wine — where it's grown, when it's picked, and where it's quietly relocating. Reported from primary sources. No scores, no tasting notes.",
   active = "",
 } = Astro.props;
 
@@ -138,7 +138,7 @@ const isActive = (href: string) => active === href;
         </a>
         <div class="site-footer__main">
           <div class="site-footer__copy">
-            © <span id="year">2026</span> Winethropocene — Wine, climate, and adaptation.
+            © <span id="year">2026</span> Winethropocene — wine in a warming world.
           </div>
           <div class="site-footer__links">
             {nav.map((item) => <a href={item.href}>{item.label}</a>)}

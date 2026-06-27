@@ -16,15 +16,16 @@ const producers = await getCollection("producers");
 
   <section class="container container--wide">
     <p class="lead">
-      A directory of winegrowers at the front line of climate adaptation —
-      from the Andes to the Venice Lagoon, from Denmark to Patagonia.
+      The growers improvising at the edges — 1,800 metres up the Andes, on
+      sinking islands in the Venice lagoon, at the 56th parallel in Denmark,
+      down in Patagonia. The frontier moved, and they moved with it.
     </p>
   </section>
 
   {
     producers.length === 0 ? (
       <section class="container container--wide">
-        <p class="text-meta">Producer directory coming soon.</p>
+        <p class="text-meta">Directory incoming.</p>
       </section>
     ) : (
       <section class="container container--wide">

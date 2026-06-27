@@ -618,7 +618,7 @@ p + p { margin-top: 0; }
   color: var(--pink);
   line-height: 0.95;
   letter-spacing: var(--ls-display);
-  text-transform: uppercase;
+  /* Title Case as authored — no all-caps except the WINETHROPOCENE wordmark */
   display: inline-block;
   opacity: 0;
   animation: splash-fade 700ms var(--ease-out) 380ms both;

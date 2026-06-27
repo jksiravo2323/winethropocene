@@ -26,21 +26,20 @@ const themeLabel = (t: string) =>
 <BaseLayout title="Articles — Winethropocene" active="/articles">
     <SpreadCanvas />
   <section class="container container--wide">
-    <SectionHero name="ARTICLES AND REPORTS" />
+    <SectionHero name="Articles" />
   </section>
 
   <section class="container container--wide research-intro">
     <p class="lead">
-      Research-backed journalism at the intersection of wine, climate science,
-      and cultural adaptation. Every article is built from primary sources and
-      verified data.
+      Reported pieces on wine and a warming planet — primary sources, named
+      researchers, real numbers. No scores, no tasting notes, no vibes.
     </p>
   </section>
 
   {
     articles.length === 0 ? (
       <section class="container container--wide">
-        <p class="text-meta">Articles coming soon.</p>
+        <p class="text-meta">First articles incoming.</p>
       </section>
     ) : (
       <section class="container container--wide">

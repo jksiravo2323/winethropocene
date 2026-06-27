@@ -1,0 +1,617 @@
+---
+// AtlasMap — a 2D "square elevation map" for the wine atlas, built in the same
+// pixel-square language as the hero SpreadCanvas. A fixed-screen-size grid of
+// squares *filters* a real equirectangular grayscale DEM: darker square = higher
+// ground. Oceans draw nothing, so continents emerge as fields of squares over the
+// page background. Squares stay a constant on-screen size while zooming; zoom
+// just picks a finer mip level of the texture, revealing more detail.
+//
+// Speaks the shared atlas events: atlas:open, atlas:filter, atlas:view.
+//
+// Textures (both equirectangular, 4096×2048, from turban/webgl-earth, free to use):
+//   earth-elevation.png — grayscale heightmap (brightness ≈ elevation)
+//   earth-water.png     — water mask (bright = sea, dark = land); gates which cells
+//                         draw, at a resolution that resolves narrow seas (Channel).
+import { loadAtlas, categoryMeta, statusGroupOf } from "../lib/atlas";
+
+const { entries } = await loadAtlas();
+
+const points = entries.map((e) => {
+  const meta = categoryMeta(e.data.category);
+  return {
+    slug: e.id,
+    title: e.data.title,
+    category: e.data.category,
+    categoryLabel: meta.label,
+    accent: meta.accent,
+    place: e.data.place,
+    country: e.data.country,
+    statusGroup: statusGroupOf(e.data.status) ?? "",
+    climate: e.data.climateZone ?? "",
+    summary: e.data.summary ?? "",
+    image: e.data.image ?? "",
+    lat: e.data.lat,
+    lon: e.data.lon,
+  };
+});
+---
+
+<div
+  class="atlas-map"
+  data-points={JSON.stringify(points)}
+  role="group"
+  aria-label="Square elevation map of wine atlas entries"
+>
+  <canvas class="atlas-map__canvas" aria-hidden="true"></canvas>
+  <div class="atlas-map__pins"></div>
+  <div class="atlas-map__tooltip" role="status" hidden></div>
+  <p class="atlas-map__hint">
+    Drag to pan · scroll to zoom · darker squares are higher ground · click a pin to open
+  </p>
+</div>
+
+<script>
+  interface Pt {
+    slug: string;
+    title: string;
+    category: string;
+    categoryLabel: string;
+    accent: string;
+    place: string;
+    country: string;
+    statusGroup: string;
+    climate: string;
+    summary: string;
+    image: string;
+    lat: number;
+    lon: number;
+  }
+  interface Level {
+    w: number;
+    h: number;
+    data: Uint8Array;
+  }
+  interface Marker {
+    pt: Pt;
+    el: HTMLButtonElement;
+    filtered: boolean;
+  }
+
+  const root = document.querySelector<HTMLDivElement>(".atlas-map");
+  const canvas = root?.querySelector<HTMLCanvasElement>(".atlas-map__canvas");
+  const pinsLayer = root?.querySelector<HTMLDivElement>(".atlas-map__pins");
+  const tooltip = root?.querySelector<HTMLDivElement>(".atlas-map__tooltip");
+  const ctx = canvas?.getContext("2d");
+
+  if (root && canvas && pinsLayer && tooltip && ctx) {
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const pts: Pt[] = JSON.parse(root.dataset.points ?? "[]");
+
+    // ---- tuning knobs ----------------------------------------------------
+    const CELL = 3; // square pitch in CSS px (constant on screen at every zoom)
+    const SQUARE = 2; // drawn square size — 1px gutter so squares read as pixels
+    // Ocean test runs against a WATER mask (earth-water.png: bright = water, dark
+    // = land, 4096px so it resolves narrow seas the old 2048 land mask fused over,
+    // e.g. the English Channel). A cell is sea (draw nothing) when its averaged
+    // water value exceeds WATER_T — lower = more aggressive about opening channels.
+    const WATER_T = 120;
+    // Elevation curve. The DEM is dark (most land is low, only big ranges are
+    // bright). gamma > 1 pulls the low-but-nonzero plains down to the bone end
+    // while spreading hills→mountains up through the ramp — giving bone lowlands
+    // with rose→bordeaux→near-black relief and every intermediate colour in use.
+    const ELEV_GAMMA = 0.5;
+    // Per-band thresholds on the gamma-lifted elevation (length NB-1). Non-uniform
+    // so the lowland plains stay bone (band 0 covers e < STOPS[0]) while hills →
+    // mountains → peaks step through every intermediate colour above.
+    const STOPS = [0.32, 0.42, 0.52, 0.6, 0.68, 0.76, 0.85, 0.93];
+    const FIT_PAD = 1.24; // padding around the initial entry bounds
+    const FIT_MAX_ZOOM = 6; // don't over-zoom a tight cluster (× world-fit scale)
+
+    // elevation → wine ramp, low → high (darker = higher). Anchor colours are
+    // interpolated into a smooth multi-step ramp so lowland→peak reads as a
+    // gradient (bone → wine-rose → bordeaux → near-black) with intermediates.
+    const RAMP_ANCHORS: [number, number[]][] = [
+      [0.0, [245, 240, 235]], // bone — lowland (--fg)
+      [0.38, [209, 85, 122]], // wine-rose (--pink)
+      [0.7, [139, 34, 82]], // bordeaux (--pink-strong)
+      [1.0, [42, 14, 26]], // near-black — peaks
+    ];
+    const NB = 9; // total bands → 5 intermediate colours between the 4 anchors (= STOPS.length + 1)
+    const rampColor = (t: number) => {
+      for (let i = 1; i < RAMP_ANCHORS.length; i++) {
+        if (t <= RAMP_ANCHORS[i][0] || i === RAMP_ANCHORS.length - 1) {
+          const [t0, c0] = RAMP_ANCHORS[i - 1];
+          const [t1, c1] = RAMP_ANCHORS[i];
+          const k = Math.max(0, Math.min(1, (t - t0) / (t1 - t0 || 1)));
+          const r = Math.round(c0[0] + (c1[0] - c0[0]) * k);
+          const g = Math.round(c0[1] + (c1[1] - c0[1]) * k);
+          const b = Math.round(c0[2] + (c1[2] - c0[2]) * k);
+          return `rgb(${r},${g},${b})`;
+        }
+      }
+      return "rgb(0,0,0)";
+    };
+    const BANDS = Array.from({ length: NB }, (_, i) => rampColor(i / (NB - 1)));
+
+    // Bake gamma + STOPS into a 256-entry raw-byte → band-index lookup so the
+    // hot draw loop is a single array read per cell.
+    const BAND_LUT = (() => {
+      const lut = new Uint8Array(256);
+      for (let b = 0; b < 256; b++) {
+        const e = Math.pow(b / 255, ELEV_GAMMA);
+        let bi = 0;
+        while (bi < STOPS.length && e >= STOPS[bi]) bi++;
+        lut[b] = bi;
+      }
+      return lut;
+    })();
+
+    // ---- textures + mip pyramids -----------------------------------------
+    let elev: Level[] | null = null;
+    let water: Level[] | null = null;
+
+    function loadGray(url: string): Promise<Level[]> {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+          const w = img.naturalWidth;
+          const h = img.naturalHeight;
+          let src = document.createElement("canvas");
+          src.width = w;
+          src.height = h;
+          const sctx = src.getContext("2d")!;
+          sctx.imageSmoothingEnabled = true;
+          sctx.imageSmoothingQuality = "high";
+          sctx.drawImage(img, 0, 0);
+          const toGray = (cv: HTMLCanvasElement): Level => {
+            const c2 = cv.getContext("2d")!;
+            const id = c2.getImageData(0, 0, cv.width, cv.height);
+            const n = cv.width * cv.height;
+            const g = new Uint8Array(n);
+            for (let i = 0; i < n; i++) g[i] = id.data[i * 4]; // red channel
+            return { w: cv.width, h: cv.height, data: g };
+          };
+          const levels: Level[] = [toGray(src)];
+          let cw = w;
+          let ch = h;
+          // halve repeatedly with the browser's high-quality downscaler
+          while (cw > 8 && ch > 4) {
+            const nw = Math.max(8, cw >> 1);
+            const nh = Math.max(4, ch >> 1);
+            const nc = document.createElement("canvas");
+            nc.width = nw;
+            nc.height = nh;
+            const nctx = nc.getContext("2d")!;
+            nctx.imageSmoothingEnabled = true;
+            nctx.imageSmoothingQuality = "high";
+            nctx.drawImage(src, 0, 0, cw, ch, 0, 0, nw, nh);
+            levels.push(toGray(nc));
+            src = nc;
+            cw = nw;
+            ch = nh;
+          }
+          resolve(levels);
+        };
+        img.onerror = reject;
+        img.src = url;
+      });
+    }
+
+    // ---- viewport state --------------------------------------------------
+    let centerLon = 0;
+    let centerLat = 20;
+    let scale = 0; // CSS px per degree of longitude
+    let W = 0;
+    let H = 0;
+    let dpr = 1;
+    let cols = 0;
+    let rows = 0;
+
+    const wrap180 = (lon: number) => ((((lon + 180) % 360) + 360) % 360) - 180;
+    const minScale = () => W / 360; // whole world (all longitudes) visible
+    // Max zoom. One native texel ≈ one cell is the point where the DEM runs out
+    // of detail; MAX_OVERSAMPLE lets you keep zooming past that (texels just span
+    // several cells — blockier, but you can get down to country/region scale).
+    const MAX_OVERSAMPLE = 9;
+    const maxScale = () => {
+      const nativeW = elev ? elev[0].w : 4096;
+      return (CELL * nativeW * MAX_OVERSAMPLE) / 360;
+    };
+
+    function clampCenter() {
+      const latHalf = H / 2 / scale;
+      if (latHalf >= 90) centerLat = 0;
+      else centerLat = Math.max(-90 + latHalf, Math.min(90 - latHalf, centerLat));
+      centerLon = wrap180(centerLon);
+    }
+
+    function project(lon: number, lat: number) {
+      const dLon = wrap180(lon - centerLon);
+      return {
+        sx: dLon * scale + W / 2,
+        sy: (centerLat - lat) * scale + H / 2,
+      };
+    }
+
+    // pick the finest mip level whose texel is still ≥ one screen cell wide
+    function pickLevel(levels: Level[], cellDeg: number) {
+      const targetW = 360 / cellDeg;
+      let i = 0;
+      while (i < levels.length - 1 && levels[i].w > targetW) i++;
+      return i;
+    }
+
+    // ---- markers (DOM pins over the canvas) ------------------------------
+    const esc = (s: string) =>
+      String(s).replace(/[&<>"]/g, (c) =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
+      );
+
+    function showTip(pt: Pt) {
+      const { sx, sy } = project(pt.lon, pt.lat);
+      const media = pt.image
+        ? `background-image:url(${pt.image})`
+        : `background:linear-gradient(135deg, ${pt.accent}, #000)`;
+      tooltip!.innerHTML =
+        `<div class="atlas-globe__card-head">${esc(pt.title)}</div>` +
+        `<div class="atlas-globe__card-body">` +
+        `<span class="atlas-globe__card-media" style="${media}"></span>` +
+        `<span class="atlas-globe__card-meta">` +
+        `<span class="atlas-globe__card-cat" style="color:${pt.accent}">${esc(pt.categoryLabel)}</span>` +
+        (pt.place ? `<span class="atlas-globe__card-place">${esc(pt.place)}</span>` : "") +
+        (pt.summary ? `<p class="atlas-globe__card-summary">${esc(pt.summary)}</p>` : "") +
+        `</span></div>`;
+      const CARD_W = 264;
+      tooltip!.classList.toggle("atlas-map__tooltip--below", sy < 180);
+      tooltip!.style.left = `${Math.max(CARD_W / 2, Math.min(W - CARD_W / 2, sx))}px`;
+      tooltip!.style.top = `${sy}px`;
+      tooltip!.hidden = false;
+    }
+    const hideTip = () => (tooltip!.hidden = true);
+
+    const markers: Marker[] = pts.map((pt) => {
+      const el = document.createElement("button");
+      el.type = "button";
+      el.className = "atlas-map__pin";
+      el.setAttribute("aria-label", pt.title);
+      el.innerHTML = `<span class="atlas-mappin__glyph" style="--accent:${pt.accent};--icon:url(/atlas/icons/${pt.category}.svg)"></span>`;
+      el.addEventListener("click", () =>
+        window.dispatchEvent(new CustomEvent("atlas:open", { detail: { slug: pt.slug } })),
+      );
+      el.addEventListener("pointerenter", () => showTip(pt));
+      el.addEventListener("pointerleave", hideTip);
+      el.addEventListener("focus", () => showTip(pt));
+      el.addEventListener("blur", hideTip);
+      pinsLayer!.appendChild(el);
+      return { pt, el, filtered: true };
+    });
+
+    function updatePins() {
+      for (const m of markers) {
+        const { sx, sy } = project(m.pt.lon, m.pt.lat);
+        const onScreen = sx >= -20 && sx <= W + 20 && sy >= -20 && sy <= H + 20;
+        if (!m.filtered || !onScreen) {
+          m.el.style.display = "none";
+          continue;
+        }
+        m.el.style.display = "block";
+        m.el.style.transform = `translate(${sx}px, ${sy}px) translate(-50%, -50%)`;
+      }
+    }
+
+    // ---- draw (on demand, rAF-coalesced) ---------------------------------
+    let pendingRaf = 0;
+    const requestRedraw = () => {
+      if (!pendingRaf) pendingRaf = requestAnimationFrame(draw);
+    };
+
+    function draw() {
+      pendingRaf = 0;
+      ctx!.clearRect(0, 0, W, H);
+      if (elev && water) {
+        const cellDeg = CELL / scale;
+        const EL = elev[pickLevel(elev, cellDeg)];
+        // Pick the water level one step finer than cell-matched so coastlines stay
+        // crisp (a cell-matched mip blurs narrow seas shut — e.g. England fusing to
+        // the mainland). Both maps are 4096 so the levels line up.
+        const WA = water[Math.max(0, pickLevel(water, cellDeg) - 1)];
+        for (let r = 0; r < rows; r++) {
+          const lat = centerLat - (r * CELL + CELL / 2 - H / 2) / scale;
+          if (lat < -90 || lat > 90) continue;
+          const v = (90 - lat) / 180;
+          let wy = (v * WA.h) | 0;
+          if (wy >= WA.h) wy = WA.h - 1;
+          let ey = (v * EL.h) | 0;
+          if (ey >= EL.h) ey = EL.h - 1;
+          const waRow = wy * WA.w;
+          const elRow = ey * EL.w;
+          for (let c = 0; c < cols; c++) {
+            const lon = centerLon + (c * CELL + CELL / 2 - W / 2) / scale;
+            const u = (((lon + 180) % 360) + 360) % 360 / 360;
+            let wx = (u * WA.w) | 0;
+            if (wx >= WA.w) wx = WA.w - 1;
+            if (WA.data[waRow + wx] > WATER_T) continue; // sea → draw nothing
+            let ex = (u * EL.w) | 0;
+            if (ex >= EL.w) ex = EL.w - 1;
+            ctx!.fillStyle = BANDS[BAND_LUT[EL.data[elRow + ex]]];
+            ctx!.fillRect(c * CELL, r * CELL, SQUARE, SQUARE);
+          }
+        }
+      }
+      updatePins();
+    }
+
+    // ---- sizing ----------------------------------------------------------
+    function resize() {
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      const rect = canvas!.getBoundingClientRect();
+      W = Math.max(1, Math.round(rect.width));
+      H = Math.max(1, Math.round(rect.height));
+      canvas!.width = Math.round(W * dpr);
+      canvas!.height = Math.round(H * dpr);
+      ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
+      cols = Math.ceil(W / CELL);
+      rows = Math.ceil(H / CELL);
+      if (scale <= 0) fitToPoints();
+      else scale = Math.max(minScale(), Math.min(maxScale(), scale));
+      clampCenter();
+    }
+
+    function fitToPoints() {
+      if (!pts.length) {
+        centerLon = 0;
+        centerLat = 20;
+        scale = minScale();
+        return;
+      }
+      // Frame ALL entries so every pin renders on load. Use the median entry as
+      // the longitude anchor (so wrap is measured from the cluster, not 0°), then
+      // take the bounding box of all points relative to it.
+      const med = (xs: number[]) => xs.slice().sort((a, b) => a - b)[xs.length >> 1];
+      const mLon = med(pts.map((p) => p.lon));
+      let minDLon = Infinity,
+        maxDLon = -Infinity,
+        minLat = Infinity,
+        maxLat = -Infinity;
+      for (const p of pts) {
+        const dLon = wrap180(p.lon - mLon);
+        minDLon = Math.min(minDLon, dLon);
+        maxDLon = Math.max(maxDLon, dLon);
+        minLat = Math.min(minLat, p.lat);
+        maxLat = Math.max(maxLat, p.lat);
+      }
+      centerLon = mLon + (minDLon + maxDLon) / 2;
+      centerLat = (minLat + maxLat) / 2;
+      const spanLon = Math.max(10, (maxDLon - minDLon) * FIT_PAD);
+      const spanLat = Math.max(10, (maxLat - minLat) * FIT_PAD);
+      let s = Math.min(W / spanLon, H / spanLat);
+      s = Math.max(minScale(), Math.min(maxScale(), s));
+      s = Math.min(s, minScale() * FIT_MAX_ZOOM);
+      scale = s;
+    }
+
+    // ---- interaction -----------------------------------------------------
+    let dragging = false;
+    let startX = 0,
+      startY = 0,
+      startLon = 0,
+      startLat = 0;
+
+    canvas.addEventListener("pointerdown", (e) => {
+      dragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      startLon = centerLon;
+      startLat = centerLat;
+      try {
+        canvas.setPointerCapture(e.pointerId);
+      } catch {}
+    });
+    canvas.addEventListener("pointermove", (e) => {
+      if (!dragging) return;
+      centerLon = startLon - (e.clientX - startX) / scale;
+      centerLat = startLat + (e.clientY - startY) / scale;
+      clampCenter();
+      requestRedraw();
+    });
+    const endDrag = (e: PointerEvent) => {
+      if (!dragging) return;
+      dragging = false;
+      try {
+        canvas.releasePointerCapture(e.pointerId);
+      } catch {}
+    };
+    canvas.addEventListener("pointerup", endDrag);
+    canvas.addEventListener("pointercancel", endDrag);
+
+    canvas.addEventListener(
+      "wheel",
+      (e) => {
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const px = e.clientX - rect.left;
+        const py = e.clientY - rect.top;
+        const aLon = centerLon + (px - W / 2) / scale;
+        const aLat = centerLat - (py - H / 2) / scale;
+        scale = Math.max(
+          minScale(),
+          Math.min(maxScale(), scale * Math.exp(-e.deltaY * 0.0015)),
+        );
+        centerLon = aLon - (px - W / 2) / scale;
+        centerLat = aLat + (py - H / 2) / scale;
+        clampCenter();
+        requestRedraw();
+      },
+      { passive: false },
+    );
+
+    // ---- shared atlas events --------------------------------------------
+    window.addEventListener("atlas:filter", (e) => {
+      const d = (e as CustomEvent<any>).detail ?? {};
+      for (const m of markers) {
+        const p = m.pt;
+        const okCat = !d.category || d.category === "all" || p.category === d.category;
+        const okCountry = !d.country || d.country === "all" || p.country === d.country;
+        const okStatus =
+          !d.statusGroup || d.statusGroup === "all" || p.statusGroup === d.statusGroup;
+        const okClimate = !d.climate || d.climate === "all" || p.climate === d.climate;
+        m.filtered = okCat && okCountry && okStatus && okClimate;
+      }
+      updatePins();
+    });
+
+    window.addEventListener("atlas:view", (e) => {
+      const view = (e as CustomEvent<{ view: string }>).detail?.view;
+      if (view === "map")
+        requestAnimationFrame(() => {
+          resize();
+          requestRedraw();
+        });
+    });
+
+    let resizeRaf = 0;
+    const onResize = () => {
+      if (resizeRaf) return;
+      resizeRaf = requestAnimationFrame(() => {
+        resizeRaf = 0;
+        resize();
+        requestRedraw();
+      });
+    };
+    window.addEventListener("resize", onResize);
+    if ("ResizeObserver" in window) new ResizeObserver(onResize).observe(root);
+
+    // ---- boot ------------------------------------------------------------
+    resize();
+    updatePins();
+    if (!reduced) canvas.style.opacity = "0";
+    Promise.all([
+      loadGray("/meshes/earth-elevation.png"),
+      loadGray("/meshes/earth-water.png"),
+    ])
+      .then(([e, w]) => {
+        elev = e;
+        water = w;
+        resize();
+        draw();
+        if (!reduced) {
+          canvas.style.transition = "opacity 0.6s ease";
+          requestAnimationFrame(() => (canvas.style.opacity = "1"));
+        }
+      })
+      .catch(() => {
+        // textures failed → still show pins on the empty board
+        updatePins();
+      });
+  }
+</script>
+
+<style>
+  .atlas-map {
+    position: relative;
+    /* Near-full-width landscape window (the world is 2:1, so a wide frame fits
+       the equirectangular sampling better than the globe's square). */
+    width: 100%;
+    max-width: 100%;
+    aspect-ratio: 16 / 9;
+    max-height: 82vh;
+    margin: 1.5rem auto 0;
+    border-radius: 12px;
+    background: #120a10; /* --bg — continents sit on the page's wine-black */
+    touch-action: none; /* the map owns drag + zoom gestures */
+  }
+  .atlas-map__canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+    image-rendering: pixelated;
+    cursor: grab;
+  }
+  .atlas-map__canvas:active {
+    cursor: grabbing;
+  }
+  .atlas-map__pins {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  /* Pins + glyphs are created in the client script via innerHTML/createElement,
+     so they never carry Astro's scoping attribute — these rules MUST be :global
+     to match them (same reason the globe card internals are global). */
+  :global(.atlas-map__pin) {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    pointer-events: auto;
+    display: none; /* shown + positioned by JS */
+    transition: filter 0.15s ease;
+  }
+  :global(.atlas-map__pin:hover),
+  :global(.atlas-map__pin:focus-visible) {
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.6));
+    z-index: 4;
+    outline: none;
+  }
+  :global(.atlas-map__pin:hover .atlas-mappin__glyph),
+  :global(.atlas-map__pin:focus-visible .atlas-mappin__glyph) {
+    transform: scale(1.25);
+  }
+  :global(.atlas-mappin__glyph) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    /* All pins use the palette's deep olive green (--toxic-strong) rather than
+       per-category accents. */
+    background: var(--toxic-strong, #7e8b2e);
+    -webkit-mask: var(--icon) center / contain no-repeat;
+    mask: var(--icon) center / contain no-repeat;
+    transition: transform 0.15s ease;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.7));
+  }
+  /* Hover card — reuses the globe's :global(.atlas-globe__card-*) internals. */
+  .atlas-map__tooltip {
+    position: absolute;
+    width: 264px;
+    transform: translate(-50%, calc(-100% - 16px));
+    pointer-events: none;
+    background: #0c0c0c;
+    border: 1.5px solid var(--pink);
+    border-radius: 10px;
+    overflow: hidden;
+    font-family: var(--font-body);
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.6);
+    z-index: 5;
+  }
+  .atlas-map__tooltip--below {
+    transform: translate(-50%, 16px);
+  }
+  .atlas-map__hint {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0.6rem;
+    margin: 0;
+    text-align: center;
+    pointer-events: none;
+    color: rgba(245, 240, 235, 0.5);
+    font-size: 0.75rem;
+  }
+  @media (max-width: 800px) {
+    .atlas-map__hint {
+      font-size: 0.7rem;
+    }
+    /* Break out to full viewport width on phones, like the globe. */
+    .atlas-map {
+      width: 100vw;
+      max-width: 100vw;
+      margin-inline: calc(50% - 50vw);
+    }
+  }
+</style>

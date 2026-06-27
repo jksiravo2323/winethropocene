@@ -23,11 +23,13 @@ dist/
 .venv/
 
 # 3D source models + mesh exports. Source blends and the redundant .gltf stay
-# local; the two assets the live atlas globe loads are tracked (exceptions below).
+# local; the assets the live atlas globe + 2D square map load are tracked below.
 source_models/
 public/meshes/*
 !public/meshes/globe.glb
 !public/meshes/earth-land.png
+!public/meshes/earth-elevation.png
+!public/meshes/earth-water.png
 
 # Local environment + secrets
 .env
