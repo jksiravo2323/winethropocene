@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0D0D0D"/>
+      <stop offset="40%" stop-color="#0A1416"/>
+      <stop offset="100%" stop-color="#0B1112"/>
+    </linearGradient>
+    <linearGradient id="seaGrad" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#3E8E9C" stop-opacity="0.16"/>
+      <stop offset="70%" stop-color="#3E8E9C" stop-opacity="0.04"/>
+      <stop offset="100%" stop-color="#3E8E9C" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="ashGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#C4743E" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#C4743E" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="0" y="0" width="1200" height="4" fill="#3E8E9C"/>
+
+  <!-- Left: illustration area — caldera island, dry-farmed baskets -->
+  <rect x="30" y="30" width="460" height="570" rx="3" fill="#0D0D0D" stroke="#3E8E9C" stroke-opacity="0.12" stroke-width="1"/>
+
+  <!-- Sea band (top) -->
+  <rect x="30" y="30" width="460" height="150" rx="3" fill="url(#seaGrad)"/>
+  <g opacity="0.18">
+    <path d="M50,150 Q110,145 170,150 Q230,155 290,150 Q350,145 410,150 Q450,153 470,150" fill="none" stroke="#3E8E9C" stroke-width="0.5"/>
+    <path d="M50,165 Q110,160 170,165 Q230,170 290,165 Q350,160 410,165 Q450,168 470,165" fill="none" stroke="#3E8E9C" stroke-width="0.4"/>
+  </g>
+
+  <!-- Caldera cliff profile -->
+  <path d="M30,250 L120,200 L210,235 L300,195 L390,240 L490,205 L490,250 Z" fill="url(#ashGrad)" stroke="#C4743E" stroke-opacity="0.25" stroke-width="0.6"/>
+
+  <!-- Dwindling rainfall: short broken strokes, fading left to right -->
+  <g stroke="#3E8E9C" stroke-width="0.7" stroke-linecap="round">
+    <line x1="70" y1="70" x2="70" y2="86" opacity="0.5"/>
+    <line x1="110" y1="62" x2="110" y2="80" opacity="0.4"/>
+    <line x1="150" y1="74" x2="150" y2="88" opacity="0.32"/>
+    <line x1="200" y1="66" x2="200" y2="80" opacity="0.24"/>
+    <line x1="250" y1="76" x2="250" y2="86" opacity="0.18"/>
+    <line x1="310" y1="70" x2="310" y2="80" opacity="0.12"/>
+    <line x1="380" y1="74" x2="380" y2="82" opacity="0.08"/>
+  </g>
+
+  <!-- Kouloura basket vines — low coiled rings on the volcanic ground -->
+  <g stroke="#8B2252" stroke-width="0.8" fill="none" opacity="0.5">
+    <ellipse cx="95" cy="330" rx="22" ry="9"/>
+    <ellipse cx="95" cy="330" rx="13" ry="5"/>
+    <ellipse cx="170" cy="345" rx="22" ry="9"/>
+    <ellipse cx="170" cy="345" rx="13" ry="5"/>
+    <ellipse cx="245" cy="330" rx="22" ry="9"/>
+    <ellipse cx="245" cy="330" rx="13" ry="5"/>
+    <ellipse cx="320" cy="345" rx="22" ry="9"/>
+    <ellipse cx="320" cy="345" rx="13" ry="5"/>
+    <ellipse cx="395" cy="332" rx="22" ry="9"/>
+    <ellipse cx="395" cy="332" rx="13" ry="5"/>
+    <ellipse cx="133" cy="385" rx="22" ry="9"/>
+    <ellipse cx="133" cy="385" rx="13" ry="5"/>
+    <ellipse cx="208" cy="392" rx="22" ry="9"/>
+    <ellipse cx="208" cy="392" rx="13" ry="5"/>
+    <ellipse cx="283" cy="385" rx="22" ry="9"/>
+    <ellipse cx="283" cy="385" rx="13" ry="5"/>
+    <ellipse cx="358" cy="392" rx="22" ry="9"/>
+    <ellipse cx="358" cy="392" rx="13" ry="5"/>
+  </g>
+
+  <!-- Headline stat inside illustration -->
+  <text x="260" y="478" text-anchor="middle" font-family="Georgia,serif" font-size="40" fill="#3E8E9C" opacity="0.34">~15%</text>
+  <text x="260" y="500" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="10" letter-spacing="1" fill="#3E8E9C" opacity="0.34">of the 2000 harvest, picked in 2025</text>
+
+  <!-- Decline markers -->
+  <text x="80" y="552" font-family="Helvetica,Arial,sans-serif" font-size="9" letter-spacing="2" fill="#3E8E9C" opacity="0.5">4,000 HA</text>
+  <text x="200" y="552" font-family="Helvetica,Arial,sans-serif" font-size="9" letter-spacing="2" fill="#3E8E9C" opacity="0.3">&#8594;</text>
+  <text x="250" y="552" font-family="Helvetica,Arial,sans-serif" font-size="9" letter-spacing="2" fill="#3E8E9C" opacity="0.28">1,000 HA TODAY</text>
+
+  <!-- Right: title and text -->
+  <text x="540" y="135" font-family="Georgia,serif" font-size="44" font-weight="300" fill="#F5F0EB">
+    <tspan x="540" dy="0">Santorini Is</tspan>
+    <tspan x="540" dy="54">Running Out</tspan>
+    <tspan x="540" dy="54">of Water</tspan>
+  </text>
+
+  <line x1="540" y1="318" x2="900" y2="318" stroke="#3E8E9C" stroke-opacity="0.3" stroke-width="0.5"/>
+
+  <text x="540" y="356" font-family="Helvetica,Arial,sans-serif" font-size="15" fill="rgba(245,240,235,0.5)">
+    The island grows Assyrtiko with no irrigation.
+  </text>
+  <text x="540" y="380" font-family="Helvetica,Arial,sans-serif" font-size="15" fill="rgba(245,240,235,0.5)">
+    The rain it lives on has stopped arriving.
+  </text>
+
+  <text x="540" y="430" font-family="Georgia,serif" font-size="18" fill="#3E8E9C" opacity="0.55" font-style="italic">It taught vines to drink fog.</text>
+  <text x="540" y="455" font-family="Georgia,serif" font-size="18" fill="#3E8E9C" opacity="0.55" font-style="italic">Now there is less fog.</text>
+
+  <!-- Badge -->
+  <rect x="540" y="490" rx="999" width="155" height="28" fill="none" stroke="#3E8E9C" stroke-width="1"/>
+  <text x="617" y="509" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="11" letter-spacing="2" fill="#3E8E9C">FIELD REPORT</text>
+
+  <!-- Brand -->
+  <text x="540" y="565" font-family="Helvetica,Arial,sans-serif" font-size="14" letter-spacing="4" fill="#8B2252" opacity="0.7">WINETHROPOCENE</text>
+  <text x="900" y="565" text-anchor="end" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="rgba(245,240,235,0.28)">1 July 2026</text>
+
+  <!-- Decorative corner -->
+  <rect x="950" y="470" width="250" height="160" fill="#3E8E9C" fill-opacity="0.02"/>
+</svg>
