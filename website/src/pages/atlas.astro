@@ -58,9 +58,9 @@ const dotsSrc = (img?: string) =>
     </p>
     <p class="text-meta">
       {entries.length} {entryLabel} so far across {usedCategories.length} categor{usedCategories.length === 1 ? "y" : "ies"}.
-      Drag the map to pan and scroll to zoom — darker squares are higher ground,
-      oceans are left dark. Hover a pin for its name, or switch to the globe.
-      Click anything to open the full entry.
+      Drag the map to pan and <span data-gesture="zoom">scroll to zoom</span> — darker squares are higher ground,
+      oceans are left dark. <span data-gesture="pin">Hover a pin for its name</span>, or switch to the globe.
+      <span data-gesture="open">Click anything to open the full entry.</span>
     </p>
   </section>
 
@@ -225,6 +225,20 @@ const dotsSrc = (img?: string) =>
 </BaseLayout>
 
 <script>
+  // Touch-aware intro copy: swap mouse verbs (scroll/hover/click) for touch
+  // ones on coarse pointers. SSR renders the desktop wording.
+  if (window.matchMedia("(pointer: coarse)").matches) {
+    const swap: Record<string, string> = {
+      zoom: "pinch to zoom",
+      pin: "Tap a pin for its name",
+      open: "Tap anything to open the full entry.",
+    };
+    for (const [key, text] of Object.entries(swap)) {
+      const el = document.querySelector(`[data-gesture="${key}"]`);
+      if (el) el.textContent = text;
+    }
+  }
+
   // Modal open/close
   function openModal(slug) {
     const dlg = document.getElementById(`entry-${slug}`) as HTMLDialogElement | null;

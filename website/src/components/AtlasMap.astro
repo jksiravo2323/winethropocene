@@ -413,56 +413,105 @@ const points = entries.map((e) => {
     }
 
     // ---- interaction -----------------------------------------------------
-    let dragging = false;
+    // Zoom toward a canvas-local point (px, py): the lon/lat under that point
+    // stays fixed while scale changes. Shared by the wheel handler (desktop)
+    // and the pinch handler (touch) so the two never diverge.
+    function zoomTo(newScale: number, px: number, py: number) {
+      const aLon = centerLon + (px - W / 2) / scale;
+      const aLat = centerLat - (py - H / 2) / scale;
+      scale = Math.max(minScale(), Math.min(maxScale(), newScale));
+      centerLon = aLon - (px - W / 2) / scale;
+      centerLat = aLat + (py - H / 2) / scale;
+      clampCenter();
+      requestRedraw();
+    }
+
+    // Live pointers (mouse/touch/pen), keyed by pointerId. One pointer → pan;
+    // two pointers → pinch-zoom + two-finger pan. We don't use pointer capture:
+    // capturing a single id can swallow the second finger of a pinch.
+    const ptrs = new Map<number, { x: number; y: number }>();
+    // Pan baseline (1 finger): map center when the gesture (re)started.
     let startX = 0,
       startY = 0,
       startLon = 0,
       startLat = 0;
+    // Pinch baseline (2 fingers): finger distance at gesture start + the scale
+    // then. The anchor point is re-derived live from the current midpoint.
+    let startDist = 0,
+      startScale = 0;
 
-    canvas.addEventListener("pointerdown", (e) => {
-      dragging = true;
-      startX = e.clientX;
-      startY = e.clientY;
+    const twoIds = () => Array.from(ptrs.keys()).slice(0, 2);
+    const dist = (a: { x: number; y: number }, b: { x: number; y: number }) =>
+      Math.hypot(a.x - b.x, a.y - b.y);
+
+    // Seed the single-finger pan baseline from a given pointer.
+    function seedPan(p: { x: number; y: number }) {
+      startX = p.x;
+      startY = p.y;
       startLon = centerLon;
       startLat = centerLat;
-      try {
-        canvas.setPointerCapture(e.pointerId);
-      } catch {}
+    }
+    // Seed the pinch baseline from the two live pointers.
+    function seedPinch() {
+      const [i, j] = twoIds();
+      const a = ptrs.get(i)!;
+      const b = ptrs.get(j)!;
+      startDist = Math.max(1, dist(a, b));
+      startScale = scale;
+    }
+
+    canvas.addEventListener("pointerdown", (e) => {
+      ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (ptrs.size === 1) seedPan({ x: e.clientX, y: e.clientY });
+      else if (ptrs.size === 2) seedPinch();
     });
+
     canvas.addEventListener("pointermove", (e) => {
-      if (!dragging) return;
-      centerLon = startLon - (e.clientX - startX) / scale;
-      centerLat = startLat + (e.clientY - startY) / scale;
-      clampCenter();
-      requestRedraw();
+      const p = ptrs.get(e.pointerId);
+      if (!p) return;
+      p.x = e.clientX;
+      p.y = e.clientY;
+
+      if (ptrs.size >= 2) {
+        // Pinch-zoom + two-finger pan, anchored under the finger midpoint.
+        const [i, j] = twoIds();
+        const a = ptrs.get(i)!;
+        const b = ptrs.get(j)!;
+        const rect = canvas.getBoundingClientRect();
+        const mx = (a.x + b.x) / 2 - rect.left;
+        const my = (a.y + b.y) / 2 - rect.top;
+        zoomTo(startScale * (dist(a, b) / startDist), mx, my);
+      } else {
+        // Single-finger pan.
+        centerLon = startLon - (p.x - startX) / scale;
+        centerLat = startLat + (p.y - startY) / scale;
+        clampCenter();
+        requestRedraw();
+      }
     });
-    const endDrag = (e: PointerEvent) => {
-      if (!dragging) return;
-      dragging = false;
-      try {
-        canvas.releasePointerCapture(e.pointerId);
-      } catch {}
+
+    const endPointer = (e: PointerEvent) => {
+      if (!ptrs.delete(e.pointerId)) return;
+      // Dropping from two fingers to one: re-seed pan from the survivor so the
+      // map doesn't jump as control passes back to single-finger panning.
+      if (ptrs.size === 1) {
+        const [only] = ptrs.values();
+        seedPan(only);
+      }
     };
-    canvas.addEventListener("pointerup", endDrag);
-    canvas.addEventListener("pointercancel", endDrag);
+    canvas.addEventListener("pointerup", endPointer);
+    canvas.addEventListener("pointercancel", endPointer);
 
     canvas.addEventListener(
       "wheel",
       (e) => {
         e.preventDefault();
         const rect = canvas.getBoundingClientRect();
-        const px = e.clientX - rect.left;
-        const py = e.clientY - rect.top;
-        const aLon = centerLon + (px - W / 2) / scale;
-        const aLat = centerLat - (py - H / 2) / scale;
-        scale = Math.max(
-          minScale(),
-          Math.min(maxScale(), scale * Math.exp(-e.deltaY * 0.0015)),
+        zoomTo(
+          scale * Math.exp(-e.deltaY * 0.0015),
+          e.clientX - rect.left,
+          e.clientY - rect.top,
         );
-        centerLon = aLon - (px - W / 2) / scale;
-        centerLat = aLat + (py - H / 2) / scale;
-        clampCenter();
-        requestRedraw();
       },
       { passive: false },
     );
@@ -502,6 +551,14 @@ const points = entries.map((e) => {
     };
     window.addEventListener("resize", onResize);
     if ("ResizeObserver" in window) new ResizeObserver(onResize).observe(root);
+
+    // ---- hint copy (touch vs pointer) ------------------------------------
+    // SSR renders the desktop wording; swap zoom/click verbs on coarse pointers.
+    const hint = root.querySelector<HTMLParagraphElement>(".atlas-map__hint");
+    if (hint && window.matchMedia("(pointer: coarse)").matches) {
+      hint.textContent =
+        "Drag to pan · pinch to zoom · darker squares are higher ground · tap a pin to open";
+    }
 
     // ---- boot ------------------------------------------------------------
     resize();
