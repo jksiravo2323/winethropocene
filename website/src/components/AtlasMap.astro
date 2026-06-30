@@ -287,7 +287,21 @@ const points = entries.map((e) => {
       return { pt, el, filtered: true };
     });
 
+    // Pins keep a constant base footprint at world-fit, then grow as you zoom
+    // in so a region's pins feel proportionate to the terrain you've zoomed
+    // into (instead of staying tiny specks). Gentle log ramp, clamped, between
+    // PIN_MIN× (whole-world) and PIN_MAX× (deep zoom). The drawn square stays a
+    // constant on-screen size by design; pins intentionally do NOT, so they
+    // stay grabbable and legible when a cluster spreads out.
+    const PIN_MIN = 1;
+    const PIN_MAX = 2.3;
+    const pinScale = () => {
+      const z = scale / minScale(); // 1 = whole world visible
+      return Math.max(PIN_MIN, Math.min(PIN_MAX, 1 + 0.26 * Math.log2(z)));
+    };
+
     function updatePins() {
+      const f = pinScale();
       for (const m of markers) {
         const { sx, sy } = project(m.pt.lon, m.pt.lat);
         const onScreen = sx >= -20 && sx <= W + 20 && sy >= -20 && sy <= H + 20;
@@ -296,7 +310,7 @@ const points = entries.map((e) => {
           continue;
         }
         m.el.style.display = "block";
-        m.el.style.transform = `translate(${sx}px, ${sy}px) translate(-50%, -50%)`;
+        m.el.style.transform = `translate(${sx}px, ${sy}px) translate(-50%, -50%) scale(${f.toFixed(3)})`;
       }
     }
 
@@ -646,14 +660,17 @@ const points = entries.map((e) => {
     display: block;
     width: 100%;
     height: 100%;
-    /* All pins use the palette's bright chlorotic green (--toxic) rather than
-       per-category accents — the direct complement of the red elevation ramp,
-       so the single-line glyphs stand out at every zoom. */
-    background: var(--toxic, #b6c24a);
+    /* All pins are bone (--fg) rather than per-category accents — the elevation
+       ramp runs bone → wine-rose → bordeaux → near-black, and the regions sit
+       mostly on the rose/bordeaux land, so a bone glyph reads cleanly at every
+       zoom while staying on-palette. A tight dark halo keeps it legible on the
+       rare bone lowlands too. (Replaced the chlorotic --toxic green.) */
+    background: var(--fg, #f5f0eb);
     -webkit-mask: var(--icon) center / contain no-repeat;
     mask: var(--icon) center / contain no-repeat;
     transition: transform 0.15s ease;
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.7));
+    filter: drop-shadow(0 0.5px 1px rgba(0, 0, 0, 0.55))
+      drop-shadow(0 0 2px rgba(0, 0, 0, 0.85));
   }
   /* Hover card — reuses the globe's :global(.atlas-globe__card-*) internals. */
   .atlas-map__tooltip {
