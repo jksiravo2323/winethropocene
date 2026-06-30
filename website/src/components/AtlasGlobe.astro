@@ -493,12 +493,13 @@ const points = entries.map((e) => {
 <style>
   .atlas-globe {
     position: relative;
-    /* Square (1:1) so the globe reads as a globe. Width drives height; capped
-       to the viewport height so a big square never overflows the screen. */
-    width: 100%;
-    max-width: min(100%, 86vh);
+    /* Square (1:1) so the globe reads as a globe — sized to the largest square
+       that fits the full-screen pane (the smaller of pane width and height),
+       centred by the flex pane in atlas.astro. */
     aspect-ratio: 1 / 1;
-    margin: 1.5rem auto 0;
+    width: min(100%, calc(100svh - var(--header-h, 64px)));
+    max-height: 100%;
+    margin: 0 auto;
     border-radius: 12px;
     /* No overflow:hidden — the hover card must be able to spill past the globe
        edges. The canvas carries its own rounding so corners still look clipped. */
@@ -595,14 +596,6 @@ const points = entries.map((e) => {
   @media (max-width: 800px) {
     .atlas-globe__hint {
       font-size: 0.7rem;
-    }
-    /* On phones the square globe is pinched by the container's side gutters,
-       leaving a small window. Break out to the full viewport width so the
-       globe is as large as the screen allows. */
-    .atlas-globe {
-      width: 100vw;
-      max-width: 100vw;
-      margin-inline: calc(50% - 50vw);
     }
   }
 </style>

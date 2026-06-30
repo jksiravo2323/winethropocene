@@ -64,7 +64,7 @@ const dotsSrc = (img?: string) =>
     </p>
   </section>
 
-  <section class="container container--wide" id="atlas-view">
+  <section class="container container--wide atlas-view-section" id="atlas-view">
     <div class="atlas-view-toggle" role="tablist" aria-label="Choose map view">
       <button
         type="button"
@@ -350,3 +350,42 @@ const dotsSrc = (img?: string) =>
   );
   window.addEventListener("atlas:globe-failed", () => setView("map"));
 </script>
+
+<style>
+  /* Full-screen atlas: the map/globe panes break out of the page column to fill
+     the whole viewport (full-bleed width × viewport height minus the sticky
+     header), so the map reads as a real map instead of a little framed window.
+     Applies on mobile and desktop alike. */
+  .atlas-view-section {
+    max-width: 100vw;
+    margin: 0;
+    padding: 0;
+    position: relative;
+  }
+  .atlas-view {
+    width: 100vw;
+    margin-inline: calc(50% - 50vw);
+    height: calc(100svh - var(--header-h, 64px));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  /* keep the toggle's hide behaviour winning over the flex display above */
+  .atlas-view[hidden] {
+    display: none;
+  }
+  /* View toggle floats over the top of the map, sticking just under the header
+     as you scroll the full-height map past it. Scrim + blur keep it legible over
+     whatever terrain colour sits behind it. */
+  .atlas-view-section .atlas-view-toggle {
+    position: sticky;
+    top: calc(var(--header-h, 64px) + 0.75rem);
+    z-index: 6;
+    display: flex;
+    width: max-content;
+    margin: 0 auto -3.4rem;
+    background: rgba(var(--bg-rgb), 0.66);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+</style>
