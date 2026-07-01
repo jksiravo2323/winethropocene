@@ -6,6 +6,15 @@ making meaningful changes. See [CLAUDE.md](CLAUDE.md) for the full protocol.
 
 ---
 
+## 2026-07-01 — Unify atlas name across pages
+
+**Agent:** Claude (Opus 4.8)
+**Files:** `website/src/pages/index.astro`
+**Summary:** Resolved the split atlas name at Julian's request — the homepage
+section heading now reads **"Atlas of the Winethropocene"**, matching the atlas
+page hero (renamed earlier by Interpreter). The name is now consistent sitewide.
+**Doc updates:** none needed — `website/CLAUDE.md` already reflects the new name.
+
 ## 2026-07-01 — Atlas renamed to "Atlas of the Winethropocene"
 
 **Agent:** Interpreter (deepseek-v4-pro)
