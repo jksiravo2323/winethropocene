@@ -38,4 +38,4 @@ The MOSE flood barrier system, operational since 2020, protects Venice from extr
 
 The Venice Lagoon produces a tiny fraction of Italy's wine. Its significance is cultural, not commercial: it represents a form of viticulture — urban, heritage, small-scale — that has few parallels anywhere in the world.
 
-The question is whether it can survive in a lagoon that is itself under existential threat. If the answer is no, the loss is not measured in hectolitres. It is measured in the disappearance of a living link between wine and one of the world's most extraordinary cities.
+Its survival depends on a lagoon that is itself under existential threat. Should it go, the loss is not measured in hectolitres — it is the disappearance of a living link between wine and one of the world's most extraordinary cities.

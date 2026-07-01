@@ -119,7 +119,7 @@
   /* title ladder — keep these in descending order; page titles must read as
      primary, deeper-page (article) titles a clear step below the homepage hero */
   --fs-page-title:    clamp(2.6rem, 11vw, 7rem);  /* section-page hero (poster, caps, pink) */
-  --fs-article-title: clamp(2.6rem, 6.5vw, 5rem); /* in-article H1 (Fraunces, accent) */
+  --fs-article-title: clamp(2.6rem, 6.5vw, 5rem); /* in-article H1 (Velvelyne, poster, accent) */
   --ls-display: -0.045em;
   --ls-heading: -0.02em;
   --ls-caps:    0.16em;
@@ -408,7 +408,7 @@ h1, h2, h3, h4 {
 h1 {
   font-family: var(--font-poster);             /* groovy poster face = signage; a bare
                                                   page-level h1 reads at the page-title scale.
-                                                  (Article H1 overrides to Fraunces — .report__title) */
+                                                  (Article H1 overrides to Velvelyne — .report__title) */
   font-size: var(--fs-page-title);
   letter-spacing: var(--ls-display);
   color: var(--fg);

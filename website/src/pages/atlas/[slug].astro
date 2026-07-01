@@ -20,6 +20,7 @@ if (!entry) return Astro.redirect("/404");
 <BaseLayout
   title={`${entry.data.title} — Winethropocene Atlas`}
   description={entry.data.summary ?? entry.data.subtitle}
+  ogImage={entry.data.image}
   active="/atlas"
 >
     <section class="container container--wide" style="padding-top: clamp(2rem, 4vw, 3rem);">

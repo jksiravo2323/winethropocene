@@ -6,7 +6,7 @@ lat: 49.0
 lon: 4.0
 category: "region"
 subcategory: "sparkling"
-summary: "The world's most famous sparkling wine region confronting a warmer, earlier harvest. AOC reform, the Voltis experiment, and the question of what 'Champagne' means when the climate that defined it no longer exists."
+summary: "The world's most famous sparkling wine region confronting a warmer, earlier harvest. AOC reform, the Voltis experiment, and a legal boundary staying fixed at its 1927 lines while the climate that defined it moves north."
 subtitle: "Where the bubbles meet the heat"
 status: "adapting"
 climateZone: "continental"
@@ -39,4 +39,4 @@ The approval is experimental: plantings are limited, and Voltis cannot appear on
 
 Champagne's AOC is defined partly by climate: the "marginal" cool conditions that produce the region's characteristic acidity. As those conditions shift northward, the legal definition of Champagne remains fixed to its 1927 boundaries. The result is a growing tension between the legal Champagne and the climatic Champagne.
 
-The region is adapting — earlier harvests, canopy management, reserve wine systems — but the fundamental question is unresolved: what is Champagne when the climate that created it no longer exists within the boundaries that define it?
+The region is adapting — earlier harvests, canopy management, reserve wine systems — but the boundary stays fixed at its 1927 lines while the climate walks north out of them. At some point the legal Champagne and the climatic Champagne are no longer the same place.

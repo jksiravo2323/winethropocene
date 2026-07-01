@@ -6,7 +6,7 @@ lat: 44.8
 lon: -0.6
 category: "region"
 subcategory: "red"
-summary: "The world's most copied wine region, now quietly permitting lab-bred disease-resistant hybrid grapes into its AOC system. Warmer, wetter seasons are increasing fungal disease pressure and forcing adaptation at the symbolic heart of traditional wine."
+summary: "The world's most copied wine region, now permitting lab-bred disease-resistant hybrid grapes into its AOC system. Warmer, wetter seasons are increasing fungal disease pressure and forcing adaptation at the symbolic heart of traditional wine."
 subtitle: "The citadel adapts"
 status: "adapting"
 climateZone: "maritime"
@@ -39,4 +39,4 @@ The PIWI hybrids reduce fungicide requirements by up to 60–80% compared to tra
 
 The 5% cap is a rounding error in volume terms. Its significance is symbolic: Bordeaux, the citadel of tradition, has acknowledged that the climate for which its AOC was drawn no longer exists. The approval is explicitly experimental and can be raised, lowered, or revoked based on evidence.
 
-The question is whether 5% is enough to make a difference — and whether the cap will be raised if disease pressure continues to increase.
+Five percent is not enough to change a vintage. It is enough to change a precedent — and a cap like this only ever moves in one direction once the disease pressure refuses to relent.

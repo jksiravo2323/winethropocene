@@ -3,6 +3,7 @@ export const prerender = true;
 import BaseLayout from "../layouts/BaseLayout.astro";
 import SpreadCanvas from "../components/SpreadCanvas.astro";
 import SectionHero from "../components/SectionHero.astro";
+import Newsletter from "../components/Newsletter.astro";
 import { getCollection, render } from "astro:content";
 
 const members = (await getCollection("team")).sort(
@@ -11,7 +12,11 @@ const members = (await getCollection("team")).sort(
 const rendered = await Promise.all(members.map((m) => render(m)));
 ---
 
-<BaseLayout title="About — Winethropocene" active="/about">
+<BaseLayout
+  title="About — Winethropocene"
+  description="Who's behind Winethropocene and how it's made — primary sources, named researchers, real numbers. No scores, no tasting notes."
+  active="/about"
+>
     <SpreadCanvas />
   <section class="container container--wide">
     <SectionHero name="About" />
@@ -35,17 +40,17 @@ const rendered = await Promise.all(members.map((m) => render(m)));
         </p>
         <p>
           Everything here is built from primary sources, named researchers and
-          real numbers. No scores, no stars, no tasting notes. We don't argue a
-          case — we choose what to put beside what, and let the facts do the
-          work. An editorial project, not a personality.
+          real numbers. No scores, no stars, no tasting notes. We argue through
+          arrangement — what we choose to set beside what — and keep the sourcing
+          in plain view, so you can check the seams.
         </p>
       </div>
       <aside class="cols-lead__aside">
-        <span class="cols-lead__aside-eyebrow">Launching</span>
-        <h3 class="cols-lead__aside-title">15 August 2026</h3>
-        <p class="cols-lead__aside-meta">
-          On Instagram and at winethropocene.com.
-        </p>
+        <Newsletter
+          eyebrow="Newsletter"
+          heading="Get it in your inbox"
+          blurb="New Atlas entries and articles, occasionally. No more than that."
+        />
       </aside>
     </div>
   </section>

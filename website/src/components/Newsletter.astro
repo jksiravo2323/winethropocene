@@ -1,0 +1,131 @@
+---
+// Email capture — posts to Buttondown's embed endpoint. No backend of our own.
+//
+// TODO(build): confirm the Buttondown username below. It is currently a best
+// guess ("winethropocene"); if the account uses a different handle, change this
+// one constant and the form + fallback popup both follow.
+const BUTTONDOWN_USERNAME = "winethropocene";
+
+export interface Props {
+  /** Small kicker above the heading. */
+  eyebrow?: string;
+  heading?: string;
+  blurb?: string;
+  /** Tighter layout for footer / sidebar placement. */
+  compact?: boolean;
+}
+
+const {
+  eyebrow = "Newsletter",
+  heading = "Get it in your inbox",
+  blurb = "New Atlas entries and articles, occasionally. No more than that.",
+  compact = false,
+} = Astro.props;
+
+const action = `https://buttondown.com/api/emails/embed-subscribe/${BUTTONDOWN_USERNAME}`;
+const popup = `https://buttondown.com/${BUTTONDOWN_USERNAME}`;
+const fieldId = `bd-email-${Math.round(Math.abs(Math.sin(heading.length) * 1e6))}`;
+---
+
+<section class:list={["newsletter", { "newsletter--compact": compact }]}>
+  <div class="newsletter__copy">
+    {eyebrow && <span class="newsletter__eyebrow">{eyebrow}</span>}
+    <h3 class="newsletter__heading">{heading}</h3>
+    {blurb && <p class="newsletter__blurb">{blurb}</p>}
+  </div>
+  <form
+    class="newsletter__form embeddable-buttondown-form"
+    action={action}
+    method="post"
+    target="popupwindow"
+    onsubmit={`window.open('${popup}', 'popupwindow')`}
+  >
+    <label class="newsletter__label" for={fieldId}>Email address</label>
+    <div class="newsletter__row">
+      <input
+        class="newsletter__input"
+        type="email"
+        name="email"
+        id={fieldId}
+        placeholder="you@example.com"
+        autocomplete="email"
+        required
+      />
+      <button class="btn newsletter__submit" type="submit">Subscribe</button>
+    </div>
+  </form>
+</section>
+
+<style>
+  .newsletter {
+    display: grid;
+    gap: clamp(1rem, 2.5vw, 1.75rem);
+    padding: clamp(1.5rem, 3vw, 2.25rem);
+    background: var(--surface);
+    border: 1px solid rgba(var(--bg-rgb), 0.6);
+    border-radius: 14px;
+  }
+  .newsletter__eyebrow {
+    display: block;
+    font-size: var(--fs-eyebrow);
+    letter-spacing: var(--ls-caps-wide);
+    text-transform: uppercase;
+    color: var(--pink);
+    margin-bottom: 0.6rem;
+  }
+  .newsletter__heading {
+    font-family: var(--font-display);
+    font-size: var(--fs-h3, 1.25rem);
+    margin: 0 0 0.4rem;
+  }
+  .newsletter__blurb {
+    color: var(--fg-soft);
+    margin: 0;
+    max-width: 46ch;
+  }
+  .newsletter__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .newsletter__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+  .newsletter__input {
+    flex: 1 1 220px;
+    min-width: 0;
+    padding: 0.85rem 1rem;
+    background: var(--bg);
+    color: var(--fg);
+    border: 1px solid var(--fg-faint);
+    border-radius: 999px;
+    font-family: var(--font-body);
+    font-size: var(--fs-caption);
+    transition: border-color 160ms var(--ease-out);
+  }
+  .newsletter__input::placeholder {
+    color: var(--fg-faint);
+  }
+  .newsletter__input:focus-visible {
+    outline: none;
+    border-color: var(--pink);
+  }
+  .newsletter__submit {
+    flex: 0 0 auto;
+    cursor: pointer;
+  }
+
+  /* Compact: single column, tighter — for footer and narrow sidebars. */
+  .newsletter--compact {
+    padding: clamp(1.1rem, 2.5vw, 1.5rem);
+    gap: 0.9rem;
+  }
+  .newsletter--compact .newsletter__heading {
+    font-size: 1.1rem;
+  }
+</style>

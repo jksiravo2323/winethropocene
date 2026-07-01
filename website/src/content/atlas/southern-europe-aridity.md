@@ -36,4 +36,4 @@ The pattern repeats across the Mediterranean arc. Spain's Jerez region is confro
 
 ## The Adaptive Response
 
-The Mediterranean wine industry is not passive. Adaptation strategies include: canopy management to reduce evapotranspiration, deficit irrigation where water is available, variety switching (from Grenache to later-ripening varieties in some zones), and, in the most extreme cases, vineyard relocation to higher elevations. The question is not whether adaptation is possible. It is whether the rate of adaptation can match the rate of change.
+The Mediterranean wine industry is not passive. Adaptation strategies include: canopy management to reduce evapotranspiration, deficit irrigation where water is available, variety switching (from Grenache to later-ripening varieties in some zones), and, in the most extreme cases, vineyard relocation to higher elevations. The techniques work. What no one can guarantee is speed — the aridity is not pacing itself to the industry's timetable.

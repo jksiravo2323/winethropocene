@@ -21,27 +21,30 @@ const dateLabel = (d?: Date) =>
   d
     ? d.toLocaleDateString("en-GB", { month: "long", year: "numeric" })
     : null;
-
-const atlasCount = (await getCollection("atlas")).length;
 ---
 
 <BaseLayout
-  title="Winethropocene — Wine, Climate & Adaptation"
+  title="Winethropocene — Reading the Climate Crisis Through Wine"
+  description="Wine as a two-directional climate ledger — gaining ground poleward, losing it equatorward. Reported from primary sources. No scores, no tasting notes."
   active="/"
 >
     <SpreadCanvas />
   <Splash />
   <p class="splash-credit">
-    Collapse and adaptation in the wine industry
+    Reads the climate crisis through wine
   </p>
 
-  <!-- Featured Article -->
-  {featuredArticle && (
-    <section class="container container--wide">
-      <div class="cols-lead" data-reveal>
-        <p class="lead">
-          {featuredArticle.data.summary}
-        </p>
+  <!-- Orienting hero + latest article -->
+  <section class="container container--wide">
+    <div class="cols-lead" data-reveal>
+      <p class="lead">
+        Wine is the oldest record of where the climate lets things grow — 7,000
+        years of what got planted, when it was picked, and what survived. Lately
+        it reads in two directions at once: gaining ground toward the poles,
+        losing it toward the equator. Winethropocene tracks both, region by
+        region.
+      </p>
+      {featuredArticle && (
         <aside class="cols-lead__aside">
           <span class="cols-lead__aside-eyebrow">Latest article</span>
           <h3 class="cols-lead__aside-title">{featuredArticle.data.title}</h3>
@@ -52,20 +55,19 @@ const atlasCount = (await getCollection("atlas")).length;
             →
           </a>
         </aside>
-      </div>
-    </section>
-  )}
+      )}
+    </div>
+  </section>
 
   <hr class="section-rule" />
 
   <!-- Atlas Preview -->
   <section class="container">
-    <h2 class="section-heading sticky-head">The Wine Atlas</h2>
+    <h2 class="section-heading sticky-head">Atlas of Oenological Collapse and Repair</h2>
     <div class="atlas-intro" data-reveal>
       <p class="lead">
-        Where wine is thriving, struggling, and quietly moving on — tracked
-        region by region. {atlasCount} entries so far, and counting in both
-        directions.
+        Where wine is thriving, struggling, and packing up — tracked region by
+        region, and counting in both directions.
       </p>
     </div>
 
@@ -135,8 +137,8 @@ const atlasCount = (await getCollection("atlas")).length;
       <div class="col">
         <h3>It's all in the harvest date</h3>
         <p>
-          Earlier picking, higher alcohol, falling acidity — seven thousand
-          years of wine records now read as a climate log.
+          Earlier picking, higher alcohol, falling acidity — 7,000 years of
+          wine records now read as a climate log.
         </p>
       </div>
     </div>
@@ -151,9 +153,9 @@ const atlasCount = (await getCollection("atlas")).length;
   <section class="container">
     <h2 class="section-heading sticky-head">The Producers</h2>
     <p class="lead" data-reveal>
-      The growers improvising at the edges — 1,800 metres up the Andes, on
-      sinking islands in the Venice lagoon, at the 56th parallel in Denmark.
-      The frontier moved, and they moved with it.
+      The growers working where wine barely holds — at altitude, on shifting
+      coasts, at latitudes that were too cold a generation ago. The frontier
+      moved, and they moved with it.
     </p>
     <div class="btn-row">
       <a class="btn" href="/producers">Meet the growers</a>

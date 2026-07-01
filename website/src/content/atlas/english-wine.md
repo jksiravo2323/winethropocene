@@ -6,7 +6,7 @@ lat: 51.0
 lon: -0.5
 category: "region"
 subcategory: "sparkling"
-summary: "England is one of the clearest winners of the poleward wine-belt shift — acreage has quadrupled in 20 years, sparkling wine now beats Champagne in blind tastings, and the climate window for still red wine is opening for the first time."
+summary: "England is one of the clearest winners of the poleward wine-belt shift — acreage has quadrupled in 20 years, its sparkling wines have beaten Champagne houses in multiple blind tastings, and the climate window for still red wine is opening for the first time."
 subtitle: "The new Champagne"
 status: "thriving"
 climateZone: "maritime"

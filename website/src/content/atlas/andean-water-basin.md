@@ -43,4 +43,4 @@ But adaptation has limits. You cannot replace a glacier with a reservoir. The sc
 
 The Andean Water Basin is the largest-scale climate threat to any single wine region in the world. Mendoza produces more than 70% of Argentina's wine and is the world's largest Malbec producer. Its dependence on a single, shrinking water source is not a local problem — it is a structural vulnerability in the global wine supply.
 
-The question is not whether Mendoza can adapt. It can, and is. The question is whether adaptation can keep pace with the rate of decline — and what "wine from Mendoza" means in a world where its defining water source is disappearing.
+Mendoza can adapt, and is adapting. What no producer can do is out-engineer the arithmetic — the vineyards draw on a water source shrinking faster than reservoirs and rootstocks can offset. What "wine from Mendoza" means in 2050 will be settled in the snowpack, not the cellar.

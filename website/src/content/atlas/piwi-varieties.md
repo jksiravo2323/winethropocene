@@ -40,7 +40,7 @@ As climate change makes growing seasons warmer and wetter across Europe's tradit
 
 The most significant development for PIWIs is regulatory: in 2021, the INAO approved Voltis for experimental use in Champagne. In 2025–2026, six PIWI varieties were approved for Bordeaux AOC wines, capped at 5% of vineyard area and 10% of any blend. These approvals carry enormous symbolic weight — if PIWIs are permitted in the world's most regulated wine regions, they can be permitted anywhere.
 
-The caps are deliberately restrictive, and the varieties cannot appear on labels. But the door is open. The question is whether the wine industry's institutions can adapt as fast as the climate.
+The caps are deliberately restrictive, and the varieties cannot appear on labels. But the door is open, and the disease pressure that opened it is not going to ease.
 
 ## Not the First Time
 

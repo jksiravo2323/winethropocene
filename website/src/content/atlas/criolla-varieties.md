@@ -37,4 +37,4 @@ The rediscovery is driven by a combination of market differentiation and climate
 
 The Criolla varieties represent a form of climate adaptation that is also a form of cultural reclamation: varieties that arrived with colonisation, adapted to a new continent over five centuries, and are now being reclaimed as assets rather than liabilities.
 
-The question is whether the market will follow. Criolla wines are unfamiliar to most consumers. Building demand takes time. But in a world where the climate is shifting faster than vineyards can be replanted, having five centuries of local adaptation in the ground is an asset that few wine regions possess.
+The harder part is the market. Criolla wines are unfamiliar to most consumers, and building demand takes time. But in a world where the climate is shifting faster than vineyards can be replanted, five centuries of local adaptation already in the ground is an asset few wine regions possess.

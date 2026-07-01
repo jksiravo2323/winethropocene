@@ -1,6 +1,7 @@
 ---
 import { render } from "astro:content";
 import type { CollectionEntry } from "astro:content";
+import Newsletter from "./Newsletter.astro";
 
 export interface Props {
   entry: CollectionEntry<"articles">;
@@ -96,4 +97,11 @@ const typologyLabel =
       )}
     </section>
   )}
+
+  <div class="report__signup" style="margin-top: clamp(2.5rem, 5vw, 4rem);">
+    <Newsletter
+      heading="Keep reading Winethropocene"
+      blurb="New Atlas entries and articles land here first. The occasional dispatch, nothing more."
+    />
+  </div>
 </article>

@@ -8,7 +8,11 @@ import { getCollection } from "astro:content";
 const producers = await getCollection("producers");
 ---
 
-<BaseLayout title="Producers — Winethropocene" active="/producers">
+<BaseLayout
+  title="Producers — Winethropocene"
+  description="The growers working at the edges of where wine can still be made, and how they're adapting to a warming climate."
+  active="/producers"
+>
     <SpreadCanvas />
   <section class="container container--wide">
     <SectionHero name="Producers" />
@@ -16,9 +20,9 @@ const producers = await getCollection("producers");
 
   <section class="container container--wide">
     <p class="lead">
-      The growers improvising at the edges — 1,800 metres up the Andes, on
-      sinking islands in the Venice lagoon, at the 56th parallel in Denmark,
-      down in Patagonia. The frontier moved, and they moved with it.
+      The growers working where wine barely holds — at altitude, on shifting
+      coasts, at latitudes that were too cold a generation ago. The frontier
+      moved, and they moved with it.
     </p>
   </section>
 
