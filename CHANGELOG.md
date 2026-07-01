@@ -6,6 +6,14 @@ making meaningful changes. See [CLAUDE.md](CLAUDE.md) for the full protocol.
 
 ---
 
+## 2026-07-01 — Atlas renamed to "Atlas of the Winethropocene"
+
+**Agent:** Interpreter (deepseek-v4-pro)
+**Files:** `website/src/pages/atlas.astro`, `website/CLAUDE.md`
+**Summary:** Replaced "Atlas of Oenological Collapse and Repair" with "Atlas of the Winethropocene" in the atlas page hero (SectionHero component). Index page heading retains the old name per explicit exclusion. The `oenological-shift` taxonomy slug in article frontmatter is a data key, not copy, and was left unchanged.
+**Doc updates:** `website/CLAUDE.md` updated to reflect new atlas name.
+
+
 ## 2026-07-01 — Editorial critique pass: SEO bug, de-templating, funnel
 
 **Agent:** Claude (Opus 4.8)

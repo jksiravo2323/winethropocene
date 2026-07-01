@@ -94,7 +94,7 @@ Schemas in `src/content.config.ts`.
   hardcode the host. Pages pass their own `description`; detail pages also pass
   `ogImage` (article `heroImage` / atlas `image`). The primary proposition,
   repeated sitewide, is **"Reads the climate crisis through wine."** The map is
-  the **"Atlas of Oenological Collapse and Repair"** (British spelling).
+  the **"Atlas of the Winethropocene"** (British spelling).
 - `Newsletter.astro` is a Buttondown embed form (no backend). The username lives
   in one `BUTTONDOWN_USERNAME` constant at the top — **currently a guess; confirm
   it.** Placed in the About aside, the site footer, and the article end.
