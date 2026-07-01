@@ -6,6 +6,45 @@ making meaningful changes. See [CLAUDE.md](CLAUDE.md) for the full protocol.
 
 ---
 
+## 2026-07-01 — Editorial team: add Leo Cappelletto, real bios
+
+**Agent:** Claude (Opus 4.8)
+**Files:** `website/src/content/team/leo-cappelletto.md` (new),
+`website/src/content/team/julian-siravo.md`
+**Summary:** Leo Cappelletto joins as **CEO & Head of Research** (previously an
+external source/lead scout). Added his team file with a web-researched bio
+(DipWSET; twelve years at Petersham Nurseries; head sommelier at Soif / Les Caves
+de Pyrène; low-intervention focus), role and `order: 2`. Rewrote Julian's
+placeholder bio — which used the Brand-Book-banned "at the intersection of" — into
+a real, deadpan one (American-Italian architect/urban designer; co-directs the
+Autonomy Institute's Public Futures Lab; co-founded Rowhill Studio, 2015) and
+updated his role from "Editor" to "Founder & Editor". About page now renders both
+members in order; build clean, preview-verified.
+**Doc updates:** none needed.
+
+## 2026-07-01 — Santorini + Simonit articles from Leo's leads
+
+**Agent:** Claude (Opus 4.8)
+**Files:** `website/src/content/articles/santorini.mdx` (new),
+`website/src/content/articles/pruning-adaptation.mdx` (new),
+`website/public/articles/{santorini,pruning-adaptation}.svg` (new),
+`website/src/content/atlas/santorini-greece.md` (new),
+`website/src/content/articles/bordeaux-hybrids.mdx`,
+`website/src/content/atlas/piwi-varieties.md`
+**Summary:** Acted on Leo Cappelletto's emailed article leads (kept him as a
+source scout, not an AI drafter). New Santorini field report + atlas entry
+(dry-farmed Assyrtiko, sub-200mm rainfall, 2025 harvest ≈15% of 2000). New
+"Pruning Is Now Climate Adaptation" brief on the Simonit & Sirch method
+(sap-flow-preserving pruning as a water-free adaptation lever; esca; Simonit's own
+"buys time" caveat). Augmented the Bordeaux article with Château La Tour Carnet's
+"2050" simulated-vintage project, and the PIWI atlas entry with the phylloxera-era
+American-hybrid precedent, Tesco's Floréal release, and the next-gen resistant-
+variety question — correcting Leo's slip that phylloxera is a nematode (it is an
+insect). All titles recast fact-led per house voice; claims sourced across 2+
+outlets; hand-built 1200×630 hero SVGs. Build clean, preview- and production-
+verified (live on winethropocene.xyz).
+**Doc updates:** none needed.
+
 ## 2026-07-01 — Unify atlas name across pages
 
 **Agent:** Claude (Opus 4.8)
